@@ -1,4 +1,5 @@
-from core.groq_utils import get_project_plan, get_cover_letter
+from groq_utils import get_project_plan, get_cover_letter
+
 from fpdf import FPDF
 from PIL import Image
 import os
