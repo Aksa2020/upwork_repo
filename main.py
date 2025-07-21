@@ -51,14 +51,11 @@ if uploaded_csv:
                                 label=f"📥 Download {label}",
                                 data=file,
                                 file_name=os.path.basename(file_path),
-                                mime='application/pdf'
-                            )
-                            # Show both PDFs in Streamlit
-solution_pdf = f"outputs/{job_id}/{job_id}_solution_flow.pdf"
-cover_letter_pdf = f"outputs/{job_id}/{job_id}_cover_letter.pdf"
-
-show_pdf(solution_pdf, "Solution Flow PDF")
-show_pdf(cover_letter_pdf, "Cover Letter PDF")
+                                mime='application/pdf')
+                            solution_pdf = f"outputs/{job_id}/{job_id}_solution_flow.pdf"
+                            cover_letter_pdf = f"outputs/{job_id}/{job_id}_cover_letter.pdf"
+                            show_pdf(solution_pdf, "Solution Flow PDF")
+                            show_pdf(cover_letter_pdf, "Cover Letter PDF")
 
 
     st.write("### Memory of Completed Jobs:")
