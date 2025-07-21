@@ -25,9 +25,8 @@ def create_tools_flow_diagram(steps, file_path):
 
 # Save clean PDF for solution with diagram
 def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pdf_path):
-    # Ensure project_plan is not None
     if not project_plan:
-        project_plan = "No project plan was generated due to an API error."
+        project_plan = "No project plan was generated due to API failure."
 
     pdf = FPDF()
     pdf.add_page()
@@ -45,6 +44,7 @@ def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pd
     pdf.set_font("Arial", style="B", size=12)
     pdf.cell(0, 10, "Proposed Project Flow:", ln=True)
     pdf.set_font("Arial", style="", size=12)
+
     for line in project_plan.split("\n"):
         clean_line = line.strip().lstrip("-").lstrip("*").strip()
         if clean_line:
@@ -55,7 +55,6 @@ def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pd
         pdf.image(diagram_path, x=20, y=pdf.get_y(), w=170)
 
     pdf.output(pdf_path)
-
 
 # Save clean PDF for cover letter
 def save_cover_letter_pdf(job_id, title, cover_letter, pdf_path):
