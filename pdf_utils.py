@@ -76,7 +76,10 @@ def save_cover_letter_pdf(job_id, title, cover_letter, pdf_path):
 
 # Master function for a single job
 def generate_all_pdfs_for_job(job_id, title, description, skills):
-    project_plan = get_project_plan(title, description, skills)
+    project_plan, steps_dict = get_project_plan(title, description, skills)
+    if not project_plan:
+        project_plan = "No project plan was generated due to API failure."
+
     cover_letter = get_cover_letter(title, description, skills)
 
     folder = f'outputs/{job_id}'
