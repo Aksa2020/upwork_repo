@@ -75,26 +75,20 @@ def save_cover_letter_pdf(job_id, title, cover_letter, pdf_path):
     pdf.output(pdf_path)
 
 
-# Master function for a single job
+
+
 def generate_all_pdfs_for_job(job_id, title, description, skills):
     project_plan, steps_dict = get_project_plan(title, description, skills)
-    if not project_plan:
-        project_plan = "No project plan was generated due to API failure."
-
     cover_letter = get_cover_letter(title, description, skills)
 
     folder = f'outputs/{job_id}'
     os.makedirs(folder, exist_ok=True)
 
-    # Create clean flow diagram with tools/technologies
-    steps = ["Python", "Pandas", "YOLO", "OpenCV", "Model Evaluation", "Deployment"]
     diagram_path = os.path.join(folder, f"{job_id}_flow_diagram.png")
-    create_tools_flow_diagram(steps, diagram_path)
+    create_tools_flow_diagram(steps_dict, diagram_path)
 
-    # Solution PDF (Project Plan + Diagram)
     solution_pdf_path = os.path.join(folder, f"{job_id}_solution_flow.pdf")
     save_solution_pdf(job_id, title, description, project_plan, diagram_path, solution_pdf_path)
 
-    # Cover Letter PDF
     cover_letter_pdf_path = os.path.join(folder, f"{job_id}_cover_letter.pdf")
     save_cover_letter_pdf(job_id, title, cover_letter, cover_letter_pdf_path)
