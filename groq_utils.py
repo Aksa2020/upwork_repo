@@ -1,6 +1,6 @@
 from groq import Groq
 
-client = Groq(api_key="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")
+
 
 
 def get_project_plan(title, description, skills):
