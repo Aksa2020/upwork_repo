@@ -1,0 +1,4 @@
+Job ID,Title,Description,Category,Skills,Budget,Client Location,Payment Verified,Client Rating
+UPW001,Build AI Model for Predicting Customer Churn,"Looking for an AI expert to build a predictive model using customer data to reduce churn. Familiarity with Python, scikit-learn required.",AI & Machine Learning,"Python, scikit-learn, AI, Data Science",1500 USD,USA,Yes,4.7
+UPW003,Develop Computer Vision System for Retail Analytics,"Develop an object detection system to analyze foot traffic in retail stores. Experience with YOLO, OpenCV preferred.",AI & Machine Learning,"YOLO, OpenCV, Computer Vision, AI",2000 USD,UK,Yes,4.5
+UPW004,Create Financial Dashboard in Excel,Financial dashboard creation using pivot tables and charts in Excel. Knowledge of finance is a plus.,Accounting & Finance,"Excel, Financial Analysis, Dashboards",300 USD,Germany,Yes,4.8
