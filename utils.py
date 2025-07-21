@@ -5,8 +5,15 @@ import os
 def load_processed_jobs(filepath):
     if not os.path.exists(filepath):
         return []
-    with open(filepath, "r") as f:
-        return json.load(f)
+
+    try:
+        with open(filepath, "r") as f:
+            data = f.read().strip()
+            if not data:
+                return []
+            return json.loads(data)
+    except json.JSONDecodeError:
+        return []
 
 
 def save_processed_jobs(job_list, filepath):
