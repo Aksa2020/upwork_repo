@@ -1,6 +1,10 @@
 from groq import Groq
 
+import streamlit as st
 
+# Read securely from Streamlit Secrets
+api_key = st.secrets["groq"]["api_key"]
+client = Groq(api_key=api_key)
 
 
 def get_project_plan(title, description, skills):
