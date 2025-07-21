@@ -9,7 +9,7 @@ from utils import load_processed_jobs, save_processed_jobs, filter_jobs
 st.set_page_config(page_title="Upwork Proposal Generator", layout="wide")
 st.title("Upwork Project PDF Generator with LLM + Memory")
 
-memory_file = "data/processed_jobs.json"
+memory_file = "processed_jobs.json"
 processed_jobs = load_processed_jobs(memory_file)
 
 uploaded_csv = st.file_uploader("Upload your Jobs CSV", type=["csv"])
