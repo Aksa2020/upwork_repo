@@ -5,22 +5,24 @@ import matplotlib.pyplot as plt
 
 
 # Create clean vertical flow diagram using matplotlib
-def create_tools_flow_diagram(steps, file_path):
-    fig, ax = plt.subplots(figsize=(4, len(steps)))  # Dynamic height
-    ax.axis('off')
+from graphviz import Digraph
 
-    for i, step in enumerate(steps):
-        ax.text(0.5, 1 - (i / len(steps)), step, ha='center', va='center',
-                bbox=dict(boxstyle="round,pad=0.4", fc="lightblue", ec="black"))
+def create_tools_flow_diagram(steps_dict, output_path):
+    dot = Digraph(comment="Project Flow", format="png")
+    dot.attr(rankdir='TB')  # Top to Bottom arrows
 
-        if i < len(steps) - 1:
-            ax.annotate('', xy=(0.5, 1 - (i / len(steps)) - 0.05),
-                        xytext=(0.5, 1 - ((i + 1) / len(steps)) + 0.05),
-                        arrowprops=dict(arrowstyle="->", lw=2))
+    previous_node = None
+    for idx, (step, tools) in enumerate(steps_dict.items()):
+        node_name = f"step{idx}"
+        label = f"{step}\n({tools})"
+        dot.node(node_name, label, shape='box', style='filled', fillcolor='lightblue')
 
-    plt.tight_layout()
-    plt.savefig(file_path, bbox_inches='tight')
-    plt.close()
+        if previous_node:
+            dot.edge(previous_node, node_name)
+        previous_node = node_name
+
+    dot.render(output_path, cleanup=True)
+
 
 
 # Save clean PDF for solution with diagram
