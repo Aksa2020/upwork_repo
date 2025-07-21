@@ -5,7 +5,6 @@ import pandas as pd
 from pdf_utils import generate_all_pdfs_for_job
 from utils import load_processed_jobs, save_processed_jobs, filter_jobs
 
-
 st.set_page_config(page_title="Upwork Proposal Generator", layout="wide")
 st.title("Upwork Project PDF Generator with LLM + Memory")
 
@@ -15,17 +14,12 @@ processed_jobs = load_processed_jobs(memory_file)
 if "generated_pdfs" not in st.session_state:
     st.session_state.generated_pdfs = {}
 
-# 🚨 Clear All PDFs
-if st.button("🗑️ Clear All Generated PDFs & Memory"):
+# 🚨 Clear PDFs Button (DOES NOT clear memory anymore)
+if st.button("🗑️ Clear All Displayed PDFs"):
     if os.path.exists("outputs"):
         shutil.rmtree("outputs")
-    if os.path.exists(memory_file):
-        with open(memory_file, "w") as f:
-            f.write("[]")
-
     st.session_state.generated_pdfs = {}
-    processed_jobs.clear()
-    st.success("✅ All generated PDFs and memory cleared.")
+    st.success("✅ All generated PDFs cleared from outputs folder. Memory is untouched.")
 
 # 🔼 File Upload
 uploaded_csv = st.file_uploader("Upload your Jobs CSV", type=["csv"])
