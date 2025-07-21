@@ -1,4 +1,6 @@
 import json
+import os
+
 
 def load_processed_jobs(filepath):
     if not os.path.exists(filepath):
