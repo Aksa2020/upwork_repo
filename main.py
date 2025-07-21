@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 from pdf_utils import generate_all_pdfs_for_job
 from utils import load_processed_jobs, save_processed_jobs, filter_jobs
-import base64
 
 
 st.set_page_config(page_title="Upwork Proposal Generator", layout="wide")
@@ -13,13 +12,7 @@ memory_file = "processed_jobs.json"
 processed_jobs = load_processed_jobs(memory_file)
 
 
-def show_pdf(file_path, label):
-    with open(file_path, "rb") as f:
-        base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="700" height="900" type="application/pdf"></iframe>'
-        st.markdown(f"### {label}", unsafe_allow_html=True)
-        st.markdown(pdf_display, unsafe_allow_html=True)
-
+def download_pdf(file_path, label):
     with open(file_path, "rb") as file:
         st.download_button(
             label=f"📥 Download {label}",
@@ -27,6 +20,11 @@ def show_pdf(file_path, label):
             file_name=os.path.basename(file_path),
             mime='application/pdf'
         )
+
+
+def open_pdf_locally(file_path, label):
+    absolute_path = os.path.abspath(file_path)
+    st.markdown(f"[➡️ Open {label} (Local Only)]({absolute_path})", unsafe_allow_html=True)
 
 
 uploaded_csv = st.file_uploader("Upload your Jobs CSV", type=["csv"])
@@ -58,11 +56,19 @@ if uploaded_csv:
                 save_processed_jobs(processed_jobs, memory_file)
                 st.success(f"📄 PDFs generated for {job_id} successfully ✅")
 
-                solution_pdf = f"outputs/{job_id}/{job_id}_solution_flow.pdf"
-                cover_letter_pdf = f"outputs/{job_id}/{job_id}_cover_letter.pdf"
+        # PDF Paths
+        solution_pdf = f"outputs/{job_id}/{job_id}_solution_flow.pdf"
+        cover_letter_pdf = f"outputs/{job_id}/{job_id}_cover_letter.pdf"
 
-                show_pdf(solution_pdf, "Solution Flow PDF")
-                show_pdf(cover_letter_pdf, "Cover Letter PDF")
+        if os.path.exists(solution_pdf):
+            st.subheader(f"{job_id} Solution Flow PDF")
+            download_pdf(solution_pdf, "Solution Flow PDF")
+            open_pdf_locally(solution_pdf, "Solution Flow PDF")
+
+        if os.path.exists(cover_letter_pdf):
+            st.subheader(f"{job_id} Cover Letter PDF")
+            download_pdf(cover_letter_pdf, "Cover Letter PDF")
+            open_pdf_locally(cover_letter_pdf, "Cover Letter PDF")
 
 
     st.write("### Memory of Completed Jobs:")
