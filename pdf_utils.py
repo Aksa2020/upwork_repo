@@ -1,9 +1,30 @@
-from groq_utils import get_project_plan, get_cover_letter
-from fpdf import FPDF
 import os
+from fpdf import FPDF
+from groq_utils import get_project_plan, get_cover_letter
+import matplotlib.pyplot as plt
 
 
-def save_pdf(filename, title, description, project_plan):
+# Create clean vertical flow diagram using matplotlib
+def create_tools_flow_diagram(steps, file_path):
+    fig, ax = plt.subplots(figsize=(4, len(steps)))  # Dynamic height
+    ax.axis('off')
+
+    for i, step in enumerate(steps):
+        ax.text(0.5, 1 - (i / len(steps)), step, ha='center', va='center',
+                bbox=dict(boxstyle="round,pad=0.4", fc="lightblue", ec="black"))
+
+        if i < len(steps) - 1:
+            ax.annotate('', xy=(0.5, 1 - (i / len(steps)) - 0.05),
+                        xytext=(0.5, 1 - ((i + 1) / len(steps)) + 0.05),
+                        arrowprops=dict(arrowstyle="->", lw=2))
+
+    plt.tight_layout()
+    plt.savefig(file_path, bbox_inches='tight')
+    plt.close()
+
+
+# Save clean PDF for solution with diagram
+def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pdf_path):
     pdf = FPDF()
     pdf.add_page()
 
@@ -14,42 +35,57 @@ def save_pdf(filename, title, description, project_plan):
     pdf.set_font("Arial", style="B", size=12)
     pdf.cell(0, 10, "Client Request:", ln=True)
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, description)
+    pdf.multi_cell(0, 8, description.strip())
     pdf.ln(5)
 
     pdf.set_font("Arial", style="B", size=12)
-    pdf.cell(0, 10, "Proposed Project Flow (with Technologies):", ln=True)
+    pdf.cell(0, 10, "Proposed Project Flow:", ln=True)
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, project_plan)
+    for line in project_plan.split("\n"):
+        clean_line = line.strip().lstrip("-").lstrip("*").lstrip("#").strip()
+        if clean_line:
+            pdf.cell(0, 8, clean_line, ln=True)
 
-    pdf.output(filename)
+    pdf.add_page()
+    pdf.image(diagram_path, x=40, y=40, w=130)
+
+    pdf.output(pdf_path)
 
 
-def save_cover_letter_pdf(job_id, cover_letter, folder):
+# Save clean PDF for cover letter
+def save_cover_letter_pdf(job_id, title, cover_letter, pdf_path):
     pdf = FPDF()
     pdf.add_page()
+
     pdf.set_font("Arial", size=14)
-    pdf.cell(0, 10, "Bid Cover Letter", ln=True)
+    pdf.cell(0, 10, f"Job Title: {title}", ln=True)
     pdf.ln(10)
+
+    pdf.set_font("Arial", style="B", size=12)
+    pdf.cell(0, 10, "Bid Cover Letter:", ln=True)
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, cover_letter)
-    pdf.output(os.path.join(folder, f"{job_id}_cover_letter.pdf"))
+    pdf.multi_cell(0, 8, cover_letter.strip())
+
+    pdf.output(pdf_path)
 
 
+# Master function for a single job
 def generate_all_pdfs_for_job(job_id, title, description, skills):
-    folder = f"outputs/{job_id}"
+    project_plan = get_project_plan(title, description, skills)
+    cover_letter = get_cover_letter(title, description, skills)
+
+    folder = f'outputs/{job_id}'
     os.makedirs(folder, exist_ok=True)
 
-    # Get LLM-generated plan and extract steps for visual display only (not in PDF diagram)
-    project_plan, steps_dict = get_project_plan(title, description, skills)
+    # Create clean flow diagram with tools/technologies
+    steps = ["Python", "Pandas", "YOLO", "OpenCV", "Model Evaluation", "Deployment"]
+    diagram_path = os.path.join(folder, f"{job_id}_flow_diagram.png")
+    create_tools_flow_diagram(steps, diagram_path)
 
-    # Save PDF with details
-    solution_pdf = os.path.join(folder, f"{job_id}_solution_flow.pdf")
-    save_pdf(solution_pdf, title, description, project_plan)
+    # Solution PDF (Project Plan + Diagram)
+    solution_pdf_path = os.path.join(folder, f"{job_id}_solution_flow.pdf")
+    save_solution_pdf(job_id, title, description, project_plan, diagram_path, solution_pdf_path)
 
-    # Save PDF with cover letter
-    cover_letter = get_cover_letter(title, description, skills)
-    save_cover_letter_pdf(job_id, cover_letter, folder)
-
-    # Return steps_dict so Streamlit can visualize with graphviz_chart (no PNG needed)
-    return project_plan, steps_dict
+    # Cover Letter PDF
+    cover_letter_pdf_path = os.path.join(folder, f"{job_id}_cover_letter.pdf")
+    save_cover_letter_pdf(job_id, title, cover_letter, cover_letter_pdf_path)
