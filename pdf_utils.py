@@ -2,27 +2,28 @@ import os
 from fpdf import FPDF
 from groq_utils import get_project_plan, get_cover_letter
 import matplotlib.pyplot as plt
-
-
-# Create clean vertical flow diagram using matplotlib
 from graphviz import Digraph
 
+
+
 def create_tools_flow_diagram(steps_dict, output_path):
-    dot = Digraph(comment="Project Flow", format="png")
-    dot.attr(rankdir='TB')  # Top to Bottom arrows
+    fig, ax = plt.subplots(figsize=(6, len(steps_dict)))  # Auto height
 
-    previous_node = None
-    for idx, (step, tools) in enumerate(steps_dict.items()):
-        node_name = f"step{idx}"
-        label = f"{step}\n({tools})"
-        dot.node(node_name, label, shape='box', style='filled', fillcolor='lightblue')
+    ax.axis('off')
 
-        if previous_node:
-            dot.edge(previous_node, node_name)
-        previous_node = node_name
+    y_positions = list(range(len(steps_dict)*2, 0, -2))
+    for (step, tools), y in zip(steps_dict.items(), y_positions):
+        ax.text(0.5, y, f"{step}\nTools: {tools}",
+                ha='center', va='center', bbox=dict(boxstyle="round,pad=0.5", fc="lightblue"))
 
-    dot.render(output_path, cleanup=True)
+    # Draw arrows downwards
+    for i in range(len(y_positions) - 1):
+        ax.annotate('', xy=(0.5, y_positions[i+1] + 0.7), xytext=(0.5, y_positions[i] - 0.7),
+                    arrowprops=dict(arrowstyle="->", lw=2))
 
+    plt.tight_layout()
+    plt.savefig(output_path, bbox_inches='tight')
+    plt.close()
 
 
 # Save clean PDF for solution with diagram
