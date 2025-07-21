@@ -25,6 +25,12 @@ def create_tools_flow_diagram(steps, file_path):
 
 # Save clean PDF for solution with diagram
 def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pdf_path):
+    from fpdf import FPDF
+
+    # Failsafe if project_plan is None
+    if not project_plan:
+        project_plan = "No project plan was generated due to an API error."
+
     pdf = FPDF()
     pdf.add_page()
 
@@ -34,20 +40,21 @@ def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pd
 
     pdf.set_font("Arial", style="B", size=12)
     pdf.cell(0, 10, "Client Request:", ln=True)
-    pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 8, description.strip())
+    pdf.set_font("Arial", style="", size=12)
+    pdf.multi_cell(0, 10, description)
     pdf.ln(5)
 
     pdf.set_font("Arial", style="B", size=12)
     pdf.cell(0, 10, "Proposed Project Flow:", ln=True)
-    pdf.set_font("Arial", size=12)
+    pdf.set_font("Arial", style="", size=12)
     for line in project_plan.split("\n"):
-        clean_line = line.strip().lstrip("-").lstrip("*").lstrip("#").strip()
+        clean_line = line.strip().lstrip("-").lstrip("*").strip()
         if clean_line:
-            pdf.cell(0, 8, clean_line, ln=True)
+            pdf.cell(0, 10, clean_line, ln=True)
 
-    pdf.add_page()
-    pdf.image(diagram_path, x=40, y=40, w=130)
+    pdf.ln(10)
+    if os.path.exists(diagram_path):
+        pdf.image(diagram_path, x=20, y=pdf.get_y(), w=170)
 
     pdf.output(pdf_path)
 
