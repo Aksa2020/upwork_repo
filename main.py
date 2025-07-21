@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 from pdf_utils import generate_all_pdfs_for_job
 from utils import load_processed_jobs, save_processed_jobs, filter_jobs
-import base64
 
 st.set_page_config(page_title="Upwork Proposal Generator", layout="wide")
 st.title("Upwork Project PDF Generator with LLM + Memory")
@@ -11,7 +10,6 @@ st.title("Upwork Project PDF Generator with LLM + Memory")
 memory_file = "processed_jobs.json"
 processed_jobs = load_processed_jobs(memory_file)
 
-# Session state to hold generated PDFs paths
 if "generated_pdfs" not in st.session_state:
     st.session_state.generated_pdfs = {}
 
@@ -50,28 +48,33 @@ if uploaded_csv:
                     }
                     st.success(f"📄 PDFs generated for {job_id} successfully ✅")
 
-# 🔥 Display PDFs if generated
-def show_pdf(file_path, label):
-    with open(file_path, "rb") as f:
-        base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="700" height="900" type="application/pdf"></iframe>'
-        st.markdown(f"### {label}", unsafe_allow_html=True)
-        st.markdown(pdf_display, unsafe_allow_html=True)
-        f.seek(0)
-        st.download_button(
-            label=f"📥 Download {label}",
-            data=f,
-            file_name=os.path.basename(file_path),
-            mime='application/pdf'
-        )
-
+# 🔥 Show Links + Downloads
 if st.session_state.generated_pdfs:
-    st.header("📂 Download Your PDFs")
+    st.header("📂 View / Download Your PDFs")
     for job_id, pdfs in st.session_state.generated_pdfs.items():
         st.subheader(f"{job_id} Documents:")
 
-        show_pdf(pdfs["solution"], "Solution Flow PDF")
-        show_pdf(pdfs["cover"], "Cover Letter PDF")
+        solution_pdf = pdfs["solution"]
+        cover_pdf = pdfs["cover"]
+
+        # Show buttons to open in browser (assuming Streamlit runs from repo root)
+        st.markdown(f"[🔗 Open Solution Flow PDF in Browser]({solution_pdf})", unsafe_allow_html=True)
+        with open(solution_pdf, "rb") as f:
+            st.download_button(
+                label="📥 Download Solution Flow PDF",
+                data=f,
+                file_name=os.path.basename(solution_pdf),
+                mime="application/pdf"
+            )
+
+        st.markdown(f"[🔗 Open Cover Letter PDF in Browser]({cover_pdf})", unsafe_allow_html=True)
+        with open(cover_pdf, "rb") as f:
+            st.download_button(
+                label="📥 Download Cover Letter PDF",
+                data=f,
+                file_name=os.path.basename(cover_pdf),
+                mime="application/pdf"
+            )
 
 # Show processed job memory
 st.write("### Memory of Completed Jobs:")
