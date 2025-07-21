@@ -25,9 +25,7 @@ def create_tools_flow_diagram(steps, file_path):
 
 # Save clean PDF for solution with diagram
 def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pdf_path):
-    from fpdf import FPDF
-
-    # Failsafe if project_plan is None
+    # Ensure project_plan is not None
     if not project_plan:
         project_plan = "No project plan was generated due to an API error."
 
