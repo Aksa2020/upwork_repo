@@ -8,20 +8,23 @@ from utils import load_processed_jobs, save_processed_jobs, filter_jobs
 st.set_page_config(page_title="Upwork Proposal Generator", layout="wide")
 st.title("Upwork Project PDF Generator with LLM + Memory")
 
+# Permanent Memory File
 memory_file = "processed_jobs.json"
 processed_jobs = load_processed_jobs(memory_file)
 
+# Session State for displaying generated PDFs during this session
 if "generated_pdfs" not in st.session_state:
     st.session_state.generated_pdfs = {}
 
-# 🚨 Clear PDFs Button (DOES NOT clear memory anymore)
-if st.button("🗑️ Clear All Displayed PDFs"):
+# 🔥 Clear PDFs Button (Does not touch memory)
+if st.button("🗑️ Clear All Displayed PDFs (Outputs Folder)"):
     if os.path.exists("outputs"):
         shutil.rmtree("outputs")
     st.session_state.generated_pdfs = {}
     st.success("✅ All generated PDFs cleared from outputs folder. Memory is untouched.")
 
-# 🔼 File Upload
+
+# Upload CSV
 uploaded_csv = st.file_uploader("Upload your Jobs CSV", type=["csv"])
 
 if uploaded_csv:
@@ -57,7 +60,7 @@ if uploaded_csv:
                     }
                     st.success(f"📄 PDFs generated for {job_id} successfully ✅")
 
-# 🔥 Show Links + Downloads
+# 🔥 Show Links + Downloads for Current Session
 if st.session_state.generated_pdfs:
     st.header("📂 View / Download Your PDFs")
     for job_id, pdfs in st.session_state.generated_pdfs.items():
@@ -84,6 +87,6 @@ if st.session_state.generated_pdfs:
                 mime="application/pdf"
             )
 
-# Show processed job memory
-st.write("### Memory of Completed Jobs:")
+# Show permanent memory
+st.write("### Memory of Completed Jobs (Permanent JSON):")
 st.write(processed_jobs)
