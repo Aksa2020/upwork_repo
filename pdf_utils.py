@@ -1,8 +1,24 @@
 from core.groq_utils import get_project_plan, get_cover_letter
-from core.diagram import create_tools_flow_diagram
 from fpdf import FPDF
 from PIL import Image
 import os
+from graphviz import Digraph
+
+
+def create_tools_flow_diagram(steps_dict, output_path):
+    dot = Digraph(comment='Project Flow Diagram')
+    dot.attr(rankdir='TB', size='8,5')
+
+    previous = None
+    for step, tool in steps_dict.items():
+        label = f"{step}\n({tool})"
+        dot.node(step, label)
+
+        if previous:
+            dot.edge(previous, step)
+        previous = step
+
+    dot.render(output_path, format='png', cleanup=True)
 
 
 def save_pdf(filename, title, description, project_plan, steps_dict, diagram_path):
