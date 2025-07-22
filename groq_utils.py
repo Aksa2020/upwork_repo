@@ -3,6 +3,21 @@ Enhanced Groq Utilities for AI Project Planning and Proposal Generation
 
 This module provides sophisticated AI-driven project planning and cover letter generation
 for technical proposals, with emphasis on modern ML/AI technologies and deployment strategies.
+
+Requirements:
+    - Python 3.8+
+    - streamlit>=1.28.0
+    - groq>=0.4.0
+    - typing (built-in)
+    - logging (built-in)
+
+Installation:
+    pip install -r requirements.txt
+
+Environment Setup:
+    Create .streamlit/secrets.toml with:
+    [groq]
+    api_key = "your_groq_api_key_here"
 """
 
 import streamlit as st
@@ -98,21 +113,16 @@ class GroqProjectPlanner:
         """
         
         system_prompt = """
-        You are a Senior AI/ML Solutions Architect with 10+ years of experience in enterprise AI deployments.
-        Your expertise spans computer vision, NLP, MLOps, and scalable AI infrastructure.
+        You are a Senior AI/ML Solutions Architect creating clean, technical project flows.
         
-        Generate highly technical, implementation-ready project flows that demonstrate deep understanding of:
-        - Modern AI/ML architecture patterns
-        - Production deployment strategies  
-        - Performance optimization techniques
-        - Scalability and reliability considerations
+        Generate concise implementation plans that:
+        - Focus on essential tools and technologies only
+        - Avoid version numbers, metrics, or hardware specifications
+        - Keep each step brief and actionable
+        - Use modern, relevant technologies
+        - Maintain professional technical accuracy
         
-        CRITICAL REQUIREMENTS:
-        - Specify exact versions and configurations where relevant
-        - Include performance benchmarks and hardware requirements
-        - Address data security, model governance, and compliance
-        - Mention specific deployment patterns (blue-green, canary, A/B testing)
-        - Include monitoring, logging, and observability stack
+        Create flow diagrams that are clean and easy to read.
         """
         
         user_prompt = f"""
@@ -124,28 +134,21 @@ class GroqProjectPlanner:
         {technical_stack_context}
         
         DELIVERABLE REQUIREMENTS:
-        Create a production-ready technical implementation plan that follows enterprise standards.
+        Create a clean, technical implementation plan with specific tools and technologies.
         
-        Format as clean numbered steps with this exact structure:
-        1. Step Name: Specific tools, frameworks, and configurations
-        2. Step Name: Specific tools, frameworks, and configurations
+        Format as numbered steps with this exact structure:
+        1. Step Name: Tool1, Tool2, Framework3
+        2. Step Name: Tool1, Tool2, Framework3
         
-        Each step must include:
-        - Exact tool versions and configurations
-        - Hardware/infrastructure specifications
-        - Performance metrics and benchmarks
-        - Integration points and data flow
-        - Quality assurance and testing approaches
-        
-        Focus on:
-        - Scalable architecture design
-        - Production deployment readiness
-        - Performance optimization
-        - Monitoring and observability
-        - Security and compliance considerations
+        Requirements:
+        - List only the essential tools and technologies for each step
+        - NO version numbers, performance metrics, or hardware specifications
+        - Keep each step concise and focused on the core technologies
+        - Use modern, relevant tools from the technical stack provided
+        - Focus on the implementation approach, not detailed configurations
         
         NO markdown formatting. Only numbered steps with colons.
-        Minimum 8-12 comprehensive technical steps.
+        Keep responses clean and concise for flow diagrams.
         """
         
         try:
