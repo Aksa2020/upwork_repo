@@ -88,5 +88,5 @@ if st.session_state.generated_pdfs:
             )
 
 # Show permanent memory
-st.write("### Memory of Completed Jobs:")
+st.write("### List of Viewed Jobs:")
 st.write(processed_jobs)
