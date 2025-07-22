@@ -2,63 +2,265 @@ import os
 from fpdf import FPDF
 from groq_utils import get_project_plan, get_cover_letter
 import matplotlib.pyplot as plt
-from graphviz import Digraph
+import matplotlib.patches as patches
+from matplotlib.patches import FancyBboxPatch
+import textwrap
 
 def create_tools_flow_diagram(steps, diagram_path):
-    """Create a vertical flow diagram of project steps"""
+    """Create a comprehensive vertical flow diagram of ALL project steps"""
     try:
         # Ensure we have valid steps
         if not steps or len(steps) == 0:
             steps = ["No steps available"]
         
-        # Limit step text length to prevent overflow
-        processed_steps = []
-        for step in steps:
-            if len(step) > 100:
-                # Split long text into multiple lines
-                step = step[:100] + "..."
-            processed_steps.append(step)
+        print(f"Creating diagram with {len(steps)} steps")  # Debug print
         
-        # Calculate figure size based on number of steps
-        fig_height = max(6, len(processed_steps) * 1.5)
-        fig, ax = plt.subplots(figsize=(12, fig_height))
+        # Process steps - keep them concise but readable
+        processed_steps = []
+        for i, step in enumerate(steps, 1):
+            # Clean up the step text
+            clean_step = step.strip()
+            
+            # If step doesn't start with number, add it
+            if not clean_step.split('.')[0].isdigit():
+                clean_step = f"{i}. {clean_step}"
+            
+            # Wrap long text for better display
+            if len(clean_step) > 60:
+                # Split at colon if present, otherwise at 60 chars
+                if ':' in clean_step:
+                    title, tools = clean_step.split(':', 1)
+                    clean_step = f"{title}:\n{tools.strip()}"
+                else:
+                    wrapped = textwrap.fill(clean_step, width=50)
+                    clean_step = wrapped
+                    
+            processed_steps.append(clean_step)
+        
+        # Calculate figure dimensions
+        num_steps = len(processed_steps)
+        fig_height = max(8, num_steps * 1.2)  # Increased spacing
+        fig_width = 14
+        
+        fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+        ax.set_xlim(0, 10)
+        ax.set_ylim(0, num_steps + 1)
         ax.axis('off')
-        ax.set_xlim(0, 1)
-        ax.set_ylim(-0.5, len(processed_steps) - 0.5)
+        
+        # Colors for different types of steps
+        colors = ['#E8F4FD', '#FFF2CC', '#E1F5FE', '#F3E5F5', '#E8F5E8', '#FFE0B2']
         
         for i, step in enumerate(processed_steps):
-            y = len(processed_steps) - i - 1
+            y_pos = num_steps - i
+            color = colors[i % len(colors)]
             
-            # Create text box for each step
-            ax.text(0.5, y, step, ha='center', va='center',
-                    bbox=dict(boxstyle="round,pad=0.4", fc="lightblue", ec="black"),
-                    fontsize=9, fontweight='normal',
-                    wrap=False, multialignment='center')
+            # Create fancy box for each step
+            box = FancyBboxPatch((1, y_pos - 0.35), 8, 0.7,
+                               boxstyle="round,pad=0.1",
+                               facecolor=color,
+                               edgecolor='#2196F3',
+                               linewidth=2)
+            ax.add_patch(box)
+            
+            # Add step text
+            ax.text(5, y_pos, step, ha='center', va='center',
+                   fontsize=10, fontweight='bold', wrap=False)
             
             # Add arrow to next step (except for last step)
             if i < len(processed_steps) - 1:
-                ax.annotate('', xy=(0.5, y - 0.4), xytext=(0.5, y - 0.1),
-                            arrowprops=dict(arrowstyle="->", lw=2, color='black'))
+                arrow = patches.FancyArrowPatch((5, y_pos - 0.4), (5, y_pos - 0.6),
+                                              arrowstyle='->', 
+                                              mutation_scale=20,
+                                              color='#2196F3',
+                                              linewidth=3)
+                ax.add_patch(arrow)
+        
+        # Add title
+        ax.text(5, num_steps + 0.5, 'Project Implementation Flow', 
+               ha='center', va='center', fontsize=16, fontweight='bold',
+               bbox=dict(boxstyle="round,pad=0.3", facecolor='#1976D2', edgecolor='black', alpha=0.8),
+               color='white')
         
         plt.tight_layout()
-        plt.savefig(diagram_path, bbox_inches='tight', dpi=150, format='png')
+        plt.savefig(diagram_path, bbox_inches='tight', dpi=200, format='png', facecolor='white')
         plt.close()
+        print(f"Diagram saved successfully to {diagram_path}")
         
     except Exception as e:
         print(f"Error creating flow diagram: {e}")
         # Create a simple fallback diagram
-        try:
-            fig, ax = plt.subplots(figsize=(8, 4))
-            ax.text(0.5, 0.5, "Flow Diagram\nGeneration Error", 
-                   ha='center', va='center', fontsize=12,
-                   bbox=dict(boxstyle="round,pad=0.4", fc="lightcoral", ec="black"))
-            ax.set_xlim(0, 1)
-            ax.set_ylim(0, 1)
-            ax.axis('off')
-            plt.savefig(diagram_path, bbox_inches='tight', dpi=150)
-            plt.close()
-        except:
-            pass  # If even fallback fails, continue without diagram
+        create_fallback_diagram(steps, diagram_path)
+
+def create_fallback_diagram(steps, diagram_path):
+    """Create a simple fallback diagram if main creation fails"""
+    try:
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.text(0.5, 0.7, "Project Flow Diagram", ha='center', va='center', 
+               fontsize=16, fontweight='bold', transform=ax.transAxes)
+        
+        ax.text(0.5, 0.5, f"Total Steps: {len(steps)}", ha='center', va='center',
+               fontsize=12, transform=ax.transAxes)
+        
+        # List first few steps
+        step_text = ""
+        for i, step in enumerate(steps[:5]):
+            step_text += f"{i+1}. {step[:50]}...\n"
+        
+        ax.text(0.5, 0.3, step_text, ha='center', va='center',
+               fontsize=10, transform=ax.transAxes)
+        
+        if len(steps) > 5:
+            ax.text(0.5, 0.1, f"... and {len(steps)-5} more steps", 
+                   ha='center', va='center', fontsize=10, transform=ax.transAxes)
+        
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.axis('off')
+        plt.savefig(diagram_path, bbox_inches='tight', dpi=150)
+        plt.close()
+        print("Fallback diagram created")
+    except Exception as e:
+        print(f"Even fallback diagram failed: {e}")
+
+def extract_steps_from_project_plan(project_plan):
+    """Extract ALL steps from Groq model response - handles various formats"""
+    steps = []
+    
+    try:
+        if not project_plan or project_plan.strip() == "No project plan was generated due to API failure.":
+            return ["Project plan not available"]
+        
+        print("=== DEBUGGING PROJECT PLAN EXTRACTION ===")
+        print("Raw project plan from Groq:")
+        print(repr(project_plan[:1000]))  # Show first 1000 chars with special characters
+        print("=" * 50)
+        
+        # Clean the project plan text
+        clean_plan = project_plan.strip()
+        lines = clean_plan.split('\n')
+        
+        # Method 1: Look for numbered steps (1., 2., etc.)
+        numbered_steps = []
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Match patterns like "1.", "1)", "Step 1:", etc.
+            import re
+            number_patterns = [
+                r'^\d+\.',  # 1., 2., 3.
+                r'^\d+\)',  # 1), 2), 3)
+                r'^Step\s+\d+:',  # Step 1:, Step 2:
+                r'^\*\*\d+\.',  # **1., **2. (markdown bold)
+                r'^\d+\s*[-–—]',  # 1 -, 2 -, etc.
+            ]
+            
+            for pattern in number_patterns:
+                if re.match(pattern, line, re.IGNORECASE):
+                    numbered_steps.append(line)
+                    break
+        
+        if numbered_steps and len(numbered_steps) > 2:  # At least 3 steps to be confident
+            print(f"Method 1 SUCCESS: Found {len(numbered_steps)} numbered steps")
+            for i, step in enumerate(numbered_steps):
+                print(f"  Step {i+1}: {step[:100]}...")
+            return numbered_steps
+        
+        # Method 2: Look for bullet points or dashes
+        bullet_steps = []
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Match patterns like "- Step", "* Step", "• Step", etc.
+            bullet_patterns = [
+                r'^[-*•]\s*',  # -, *, •
+                r'^\*\*[-*•]\s*',  # **-, **, **•
+                r'^→\s*',  # →
+                r'^▪\s*',  # ▪
+            ]
+            
+            for pattern in bullet_patterns:
+                if re.match(pattern, line):
+                    # Remove the bullet point marker
+                    clean_step = re.sub(pattern, '', line).strip()
+                    if len(clean_step) > 10:  # Must be substantial
+                        bullet_steps.append(clean_step)
+                    break
+        
+        if bullet_steps and len(bullet_steps) > 2:
+            print(f"Method 2 SUCCESS: Found {len(bullet_steps)} bullet-point steps")
+            for i, step in enumerate(bullet_steps):
+                print(f"  Step {i+1}: {step[:100]}...")
+            return bullet_steps
+        
+        # Method 3: Look for lines with colons (Phase: Description)
+        colon_steps = []
+        for line in lines:
+            line = line.strip()
+            if ':' in line and len(line) > 15:
+                # Skip common headers
+                if not any(header in line.lower() for header in ['project', 'overview', 'summary', 'title', 'description']):
+                    colon_steps.append(line)
+        
+        if colon_steps and len(colon_steps) > 2:
+            print(f"Method 3 SUCCESS: Found {len(colon_steps)} colon-separated steps")
+            for i, step in enumerate(colon_steps):
+                print(f"  Step {i+1}: {step[:100]}...")
+            return colon_steps
+        
+        # Method 4: Look for markdown headers (## Step, ### Phase, etc.)
+        header_steps = []
+        for line in lines:
+            line = line.strip()
+            if re.match(r'^#{1,4}\s+', line):  # # ## ### ####
+                clean_step = re.sub(r'^#{1,4}\s+', '', line).strip()
+                if len(clean_step) > 5:
+                    header_steps.append(clean_step)
+        
+        if header_steps and len(header_steps) > 2:
+            print(f"Method 4 SUCCESS: Found {len(header_steps)} markdown header steps")
+            return header_steps
+        
+        # Method 5: Split by double newlines (paragraphs) and filter
+        paragraphs = [p.strip() for p in clean_plan.split('\n\n') if p.strip()]
+        substantial_paragraphs = []
+        for para in paragraphs:
+            # Remove single newlines within paragraph
+            clean_para = ' '.join(para.split('\n')).strip()
+            # Must be substantial and not just a header
+            if (len(clean_para) > 20 and 
+                not clean_para.lower().startswith(('project', 'overview', 'introduction', 'summary', 'conclusion'))):
+                substantial_paragraphs.append(clean_para)
+        
+        if substantial_paragraphs:
+            print(f"Method 5 SUCCESS: Found {len(substantial_paragraphs)} paragraph-based steps")
+            return substantial_paragraphs[:15]  # Limit to avoid too many
+        
+        # Method 6: Last resort - split by sentences and take meaningful ones
+        sentences = re.split(r'[.!?]+', clean_plan)
+        meaningful_sentences = []
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if (len(sentence) > 30 and 
+                any(keyword in sentence.lower() for keyword in 
+                    ['implement', 'develop', 'create', 'build', 'design', 'deploy', 'configure', 'setup', 'install', 'train', 'test'])):
+                meaningful_sentences.append(sentence)
+        
+        if meaningful_sentences:
+            print(f"Method 6 SUCCESS: Found {len(meaningful_sentences)} sentence-based steps")
+            return meaningful_sentences[:10]
+        
+        print("ALL METHODS FAILED - Returning raw project plan")
+        return [f"Could not parse project plan. Raw content: {clean_plan[:500]}..."]
+        
+    except Exception as e:
+        print(f"Error extracting steps: {e}")
+        import traceback
+        traceback.print_exc()
+        return [f"Error processing project plan: {str(e)}"]
 
 def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pdf_path):
     """Save project solution with diagram to PDF"""
@@ -82,54 +284,53 @@ def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pd
     
     # Project Flow Section
     pdf.set_font("Arial", style="B", size=12)
-    pdf.cell(0, 10, "Proposed Project Flow:", ln=True)
-    pdf.set_font("Arial", size=10)
+    pdf.cell(0, 10, "Complete Project Flow:", ln=True)
+    pdf.set_font("Arial", size=9)
     
     # Process project plan lines
     for line in project_plan.split("\n"):
         clean_line = line.strip().lstrip("-").lstrip("*").strip()
         if clean_line:
-            # Handle long lines by splitting them
-            if len(clean_line) > 80:
-                pdf.multi_cell(0, 6, clean_line)
+            if len(clean_line) > 90:
+                pdf.multi_cell(0, 5, clean_line)
             else:
-                pdf.cell(0, 6, clean_line, ln=True)
+                pdf.cell(0, 5, clean_line, ln=True)
     
-    pdf.ln(10)
+    pdf.ln(5)
     
     # Add diagram if it exists
     if os.path.exists(diagram_path):
         try:
-            # Check current position and add new page if needed
             current_y = pdf.get_y()
-            if current_y > 200:  # If near bottom of page
+            if current_y > 220:
                 pdf.add_page()
-                current_y = pdf.get_y()
             
             pdf.set_font("Arial", style="B", size=12)
             pdf.cell(0, 10, "Project Flow Diagram:", ln=True)
-            pdf.ln(5)
+            pdf.ln(2)
             
             # Add image with proper sizing
-            pdf.image(diagram_path, x=10, y=pdf.get_y(), w=190)
+            pdf.image(diagram_path, x=5, y=pdf.get_y(), w=200)
         except Exception as e:
             print(f"Error adding diagram to PDF: {e}")
             pdf.set_font("Arial", size=10)
             pdf.cell(0, 10, "Diagram could not be loaded.", ln=True)
+    else:
+        pdf.set_font("Arial", size=10)
+        pdf.cell(0, 10, "Flow diagram was not generated.", ln=True)
     
     pdf.output(pdf_path)
+    print(f"Solution PDF saved to {pdf_path}")
 
 def save_cover_letter_pdf(job_id, title, cover_letter, pdf_path):
     """Save cover letter to PDF"""
     pdf = FPDF()
     pdf.add_page()
     
-    # Title
     pdf.set_font("Arial", size=16, style="B")
     pdf.cell(0, 10, f"Job Title: {title}", ln=True, align='C')
     pdf.ln(10)
     
-    # Cover Letter Section
     pdf.set_font("Arial", style="B", size=12)
     pdf.cell(0, 10, "Bid Cover Letter:", ln=True)
     pdf.ln(5)
@@ -139,73 +340,15 @@ def save_cover_letter_pdf(job_id, title, cover_letter, pdf_path):
     
     pdf.output(pdf_path)
 
-def extract_steps_from_project_plan(project_plan):
-    """Extract and format steps from project plan"""
-    steps = []
-    
-    try:
-        if not project_plan or project_plan.strip() == "No project plan was generated due to API failure.":
-            return ["Project plan not available"]
-        
-        lines = project_plan.strip().split('\n')
-        
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-                
-            # Remove common prefixes
-            line = line.lstrip('-*•').strip()
-            
-            # Skip very short lines (likely not actual steps)
-            if len(line) < 5:
-                continue
-                
-            # Handle lines with colons (step: description format)
-            if ':' in line:
-                step_title, description = line.split(':', 1)
-                # Limit length to prevent display issues
-                description = description.strip()
-                if len(description) > 50:
-                    description = description[:50] + "..."
-                formatted_step = f"{step_title.strip()}: {description}"
-                steps.append(formatted_step)
-            else:
-                # Add line as is if it seems like a step
-                if any(keyword in line.lower() for keyword in ['step', 'phase', 'stage', 'task', 'implement', 'develop', 'create', 'design']):
-                    if len(line) > 80:
-                        line = line[:80] + "..."
-                    steps.append(line)
-        
-        # If no steps found, try a different approach
-        if not steps:
-            for line in lines:
-                line = line.strip().lstrip('-*•').strip()
-                if line and len(line) > 10:  # Any substantial line
-                    if len(line) > 80:
-                        line = line[:80] + "..."
-                    steps.append(line)
-        
-        # Limit to reasonable number of steps for diagram readability
-        if len(steps) > 6:
-            steps = steps[:6] + ["Additional steps in full plan..."]
-        
-        return steps if steps else ["Project plan structure not recognized"]
-        
-    except Exception as e:
-        print(f"Error extracting steps: {e}")
-        return ["Error processing project plan"]
-
 def generate_all_pdfs_for_job(job_id, title, description, skills):
-    """Generate all PDFs for a job including flow diagram"""
+    """Generate all PDFs for a job including complete flow diagram"""
     try:
-        # Validate inputs
-        if not job_id or not title:
-            raise ValueError("job_id and title are required")
-            
+        print(f"Starting PDF generation for job: {job_id}")
+        
         # Get project plan and cover letter
         try:
             project_plan, steps_dict = get_project_plan(title, description, skills)
+            print(f"Got project plan, length: {len(project_plan) if project_plan else 0}")
         except Exception as e:
             print(f"Error getting project plan: {e}")
             project_plan = "No project plan was generated due to API failure."
@@ -223,11 +366,13 @@ def generate_all_pdfs_for_job(job_id, title, description, skills):
         # Create output folder
         folder = f'outputs/{job_id}'
         os.makedirs(folder, exist_ok=True)
+        print(f"Created output folder: {folder}")
         
-        # Extract steps from project plan
+        # Extract ALL steps from project plan
         steps = extract_steps_from_project_plan(project_plan)
+        print(f"Extracted {len(steps)} steps from project plan")
         
-        # Create flow diagram
+        # Create comprehensive flow diagram
         diagram_path = os.path.join(folder, f"{job_id}_flow_diagram.png")
         create_tools_flow_diagram(steps, diagram_path)
         
@@ -239,7 +384,7 @@ def generate_all_pdfs_for_job(job_id, title, description, skills):
         cover_letter_pdf_path = os.path.join(folder, f"{job_id}_cover_letter.pdf")
         save_cover_letter_pdf(job_id, title, cover_letter, cover_letter_pdf_path)
         
-        print(f"Successfully generated PDFs for job {job_id}")
+        print(f"Successfully generated all PDFs for job {job_id}")
         print(f"Solution PDF: {solution_pdf_path}")
         print(f"Cover Letter PDF: {cover_letter_pdf_path}")
         print(f"Flow Diagram: {diagram_path}")
@@ -247,44 +392,77 @@ def generate_all_pdfs_for_job(job_id, title, description, skills):
         return {
             'solution_pdf': solution_pdf_path,
             'cover_letter_pdf': cover_letter_pdf_path,
-            'diagram_path': diagram_path
+            'diagram_path': diagram_path,
+            'steps_count': len(steps)
         }
         
     except Exception as e:
-        print(f"Error generating PDFs for job {job_id}: {e}")
-        # Still try to create basic PDFs even if flow diagram fails
-        try:
-            folder = f'outputs/{job_id}'
-            os.makedirs(folder, exist_ok=True)
-            
-            # Create basic PDFs without diagram
-            solution_pdf_path = os.path.join(folder, f"{job_id}_solution_flow.pdf")
-            cover_letter_pdf_path = os.path.join(folder, f"{job_id}_cover_letter.pdf")
-            
-            # Use fallback values if API calls failed
-            if 'project_plan' not in locals():
-                project_plan = "Project plan generation failed."
-            if 'cover_letter' not in locals():
-                cover_letter = "Cover letter generation failed."
-                
-            save_solution_pdf(job_id, title, description, project_plan, "", solution_pdf_path)
-            save_cover_letter_pdf(job_id, title, cover_letter, cover_letter_pdf_path)
-            
-            return {
-                'solution_pdf': solution_pdf_path,
-                'cover_letter_pdf': cover_letter_pdf_path,
-                'diagram_path': None
-            }
-        except Exception as fallback_error:
-            print(f"Fallback PDF generation also failed: {fallback_error}")
-            return None
+        print(f"Error in generate_all_pdfs_for_job: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
-# Example usage (if running as main script)
+def debug_groq_response(job_id, title, description, skills):
+    """Debug function to see exactly what Groq returns"""
+    try:
+        print("=== DEBUGGING GROQ MODEL RESPONSE ===")
+        print(f"Job ID: {job_id}")
+        print(f"Title: {title}")
+        print(f"Description: {description[:200]}...")
+        print(f"Skills: {skills}")
+        print("-" * 50)
+        
+        # Get the actual response from Groq
+        project_plan, steps_dict = get_project_plan(title, description, skills)
+        
+        print("RAW PROJECT PLAN FROM GROQ:")
+        print("=" * 60)
+        print(repr(project_plan))  # This shows all special characters
+        print("=" * 60)
+        print("FORMATTED PROJECT PLAN:")
+        print(project_plan)
+        print("=" * 60)
+        
+        print(f"STEPS_DICT: {steps_dict}")
+        print("-" * 50)
+        
+        # Test extraction
+        extracted_steps = extract_steps_from_project_plan(project_plan)
+        print(f"\nEXTRACTED STEPS ({len(extracted_steps)}):")
+        for i, step in enumerate(extracted_steps, 1):
+            print(f"{i}. {step}")
+        
+        return project_plan, extracted_steps
+        
+    except Exception as e:
+        print(f"Error in debug function: {e}")
+        import traceback
+        traceback.print_exc()
+        return None, []
+
+# Test function to debug step extraction
+def debug_step_extraction(sample_project_plan):
+    """Debug function to test step extraction"""
+    print("=== DEBUG: Testing Step Extraction ===")
+    steps = extract_steps_from_project_plan(sample_project_plan)
+    print(f"Extracted {len(steps)} steps:")
+    for i, step in enumerate(steps, 1):
+        print(f"{i}. {step}")
+    return steps
+
+# Example usage for testing
 if __name__ == "__main__":
-    # Test with sample data
-    test_job_id = "test_001"
-    test_title = "Sample Project"
-    test_description = "This is a test project description"
-    test_skills = ["Python", "PDF Generation", "Data Visualization"]
+    sample_plan = """1. Data Collection: IP Cameras, Raspberry Pi-4 (4GB)
+2. Data Annotation: LabelImg, CVAT
+3. Data Preprocessing: OpenCV, Pandas
+4. Model Training: YOLOv8, PyTorch, ResNet-50
+5. Model Optimization: TensorRT, PyTorch
+6. Model Deployment: FastAPI, Docker
+7. Model Inference: FastAPI, Docker, Azure
+8. Real-time Video Processing: OpenCV, FastAPI, Docker, Azure
+9. Streamlit Dashboard: Streamlit, FastAPI
+10. Cloud Infrastructure: Azure VMs and Instances (Tesla P100, V100, A100 GPUs with 32GB / 64GB RAM)
+11. Edge Device Deployment: Raspberry Pi-4 (4GB), Intel Movidius NCS2
+12. Model Updates and Maintenance: Azure, Docker, FastAPI"""
     
-    result = generate_all_pdfs_for_job(test_job_id, test_title, test_description, test_skills)
+    debug_step_extraction(sample_plan)
