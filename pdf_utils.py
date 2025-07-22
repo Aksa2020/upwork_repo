@@ -85,9 +85,10 @@ def generate_all_pdfs_for_job(job_id, title, description, skills):
     os.makedirs(folder, exist_ok=True)
 
     if isinstance(steps_dict, dict):
-        steps = [steps_dict[key] for key in sorted(steps_dict.keys(), key=int)]
+        steps = [steps_dict[key] for key in sorted([k for k in steps_dict.keys() if k.strip().isdigit()], key=int)]
     else:
         steps = []
+
 
     diagram_path = os.path.join(folder, f"{job_id}_flow_diagram.png")
     create_tools_flow_diagram(steps, diagram_path)
