@@ -10,17 +10,19 @@ def create_tools_flow_diagram(steps, file_path):
     ax.set_xlim(0, 1)
     ax.set_ylim(-1, len(steps))
 
-    for i, step in enumerate(reversed(steps)):
-        y = i
+    for i, step in enumerate(steps):
+        y = len(steps) - i - 1  # Top to bottom
         ax.text(0.5, y, step, ha='center', va='center',
                 bbox=dict(boxstyle="round,pad=0.4", fc="lightblue", ec="black"))
+
         if i < len(steps) - 1:
-            ax.annotate('', xy=(0.5, y - 0.4),
-                        xytext=(0.5, y - 0.05),
+            ax.annotate('', xy=(0.5, y - 0.05),
+                        xytext=(0.5, y - 0.4),
                         arrowprops=dict(arrowstyle="->", lw=2))
 
     plt.savefig(file_path, bbox_inches='tight', dpi=300)
     plt.close()
+
 
 
 def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pdf_path):
