@@ -87,17 +87,21 @@ def generate_all_pdfs_for_job(job_id, title, description, skills):
     folder = f'outputs/{job_id}'
     os.makedirs(folder, exist_ok=True)
 
-    if isinstance(steps_dict, dict):
-        steps = [steps_dict[key] for key in sorted([k for k in steps_dict.keys() if k.strip().isdigit()], key=int)]
-    else:
-        steps = []
+    # 🔥 Extract steps from project_plan dynamically (this is your question)
+    steps = []
+    for line in project_plan.strip().split('\n'):
+        if ':' in line:
+            step_title, tools = line.split(':', 1)
+            steps.append(f"{step_title.strip()}\n{tools.strip()}")
 
-
+    # 🔥 Draw clean flow diagram
     diagram_path = os.path.join(folder, f"{job_id}_flow_diagram.png")
     create_tools_flow_diagram(steps, diagram_path)
 
+    # 🔥 Solution PDF (Project Plan + Diagram)
     solution_pdf_path = os.path.join(folder, f"{job_id}_solution_flow.pdf")
     save_solution_pdf(job_id, title, description, project_plan, diagram_path, solution_pdf_path)
 
+    # 🔥 Cover Letter PDF
     cover_letter_pdf_path = os.path.join(folder, f"{job_id}_cover_letter.pdf")
     save_cover_letter_pdf(job_id, title, cover_letter, cover_letter_pdf_path)
