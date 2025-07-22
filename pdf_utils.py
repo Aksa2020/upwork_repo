@@ -7,7 +7,7 @@ from graphviz import Digraph
 import matplotlib.pyplot as plt
 
 
-def create_tools_flow_diagram(steps, file_path):
+def create_tools_flow_diagram(steps, diagram_path):
     fig, ax = plt.subplots(figsize=(6, len(steps) * 1.5))
     ax.axis('off')
     ax.set_xlim(0, 1)
