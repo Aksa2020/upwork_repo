@@ -4,26 +4,25 @@ from groq_utils import get_project_plan, get_cover_letter
 import matplotlib.pyplot as plt
 
 
-# Create clean vertical flow diagram using matplotlib
 def create_tools_flow_diagram(steps, file_path):
-    fig, ax = plt.subplots(figsize=(4, len(steps)))  # Dynamic height
+    fig, ax = plt.subplots(figsize=(6, len(steps) * 1.5))
     ax.axis('off')
+    ax.set_xlim(0, 1)
+    ax.set_ylim(-1, len(steps))
 
-    for i, step in enumerate(steps):
-        ax.text(0.5, 1 - (i / len(steps)), step, ha='center', va='center',
+    for i, step in enumerate(reversed(steps)):
+        y = i
+        ax.text(0.5, y, step, ha='center', va='center',
                 bbox=dict(boxstyle="round,pad=0.4", fc="lightblue", ec="black"))
-
         if i < len(steps) - 1:
-            ax.annotate('', xy=(0.5, 1 - (i / len(steps)) - 0.05),
-                        xytext=(0.5, 1 - ((i + 1) / len(steps)) + 0.05),
+            ax.annotate('', xy=(0.5, y - 0.4),
+                        xytext=(0.5, y - 0.05),
                         arrowprops=dict(arrowstyle="->", lw=2))
 
-    plt.tight_layout()
-    plt.savefig(file_path, bbox_inches='tight')
+    plt.savefig(file_path, bbox_inches='tight', dpi=300)
     plt.close()
 
 
-# Save clean PDF for solution with diagram
 def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pdf_path):
     if not project_plan:
         project_plan = "No project plan was generated due to API failure."
@@ -56,7 +55,7 @@ def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pd
 
     pdf.output(pdf_path)
 
-# Save clean PDF for cover letter
+
 def save_cover_letter_pdf(job_id, title, cover_letter, pdf_path):
     pdf = FPDF()
     pdf.add_page()
@@ -73,7 +72,6 @@ def save_cover_letter_pdf(job_id, title, cover_letter, pdf_path):
     pdf.output(pdf_path)
 
 
-# Master function for a single job
 def generate_all_pdfs_for_job(job_id, title, description, skills):
     project_plan, steps_dict = get_project_plan(title, description, skills)
     if not project_plan:
@@ -84,15 +82,16 @@ def generate_all_pdfs_for_job(job_id, title, description, skills):
     folder = f'outputs/{job_id}'
     os.makedirs(folder, exist_ok=True)
 
-    # Create clean flow diagram with tools/technologies
-    steps = ["Python", "Pandas", "YOLO", "OpenCV", "Model Evaluation", "Deployment"]
+    if isinstance(steps_dict, dict):
+        steps = [steps_dict[key] for key in sorted(steps_dict.keys(), key=int)]
+    else:
+        steps = []
+
     diagram_path = os.path.join(folder, f"{job_id}_flow_diagram.png")
     create_tools_flow_diagram(steps, diagram_path)
 
-    # Solution PDF (Project Plan + Diagram)
     solution_pdf_path = os.path.join(folder, f"{job_id}_solution_flow.pdf")
     save_solution_pdf(job_id, title, description, project_plan, diagram_path, solution_pdf_path)
 
-    # Cover Letter PDF
     cover_letter_pdf_path = os.path.join(folder, f"{job_id}_cover_letter.pdf")
     save_cover_letter_pdf(job_id, title, cover_letter, cover_letter_pdf_path)
