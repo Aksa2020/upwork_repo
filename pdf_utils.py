@@ -3,26 +3,20 @@ from fpdf import FPDF
 from groq_utils import get_project_plan, get_cover_letter
 import matplotlib.pyplot as plt
 
+def create_tools_flow_diagram(steps_dict, file_path):
+    dot = Digraph(comment='Project Tech Flow', format='png', engine='dot')
+    dot.attr(rankdir='TB', nodesep='0.5', ranksep='0.7')
+    dot.attr('node', shape='box', style='filled', fillcolor='#D6EAF8', fontsize='10')
 
-def create_tools_flow_diagram(steps, file_path):
-    fig, ax = plt.subplots(figsize=(6, len(steps) * 1.5))
-    ax.axis('off')
-    ax.set_xlim(0, 1)
-    ax.set_ylim(-1, len(steps))
+    for idx, (step_title, tools) in enumerate(steps_dict.items()):
+        label = f"{step_title}\n{tools}"
+        dot.node(f'step{idx}', label)
 
-    for i, step in enumerate(steps):
-        y = len(steps) - i - 1  # Top to bottom
-        ax.text(0.5, y, step, ha='center', va='center',
-                bbox=dict(boxstyle="round,pad=0.4", fc="lightblue", ec="black"))
+    for idx in range(len(steps_dict) - 1):
+        dot.edge(f'step{idx}', f'step{idx + 1}')
 
-        if i < len(steps) - 1:
-            ax.annotate('', xy=(0.5, y - 0.05),
-                        xytext=(0.5, y - 0.4),
-                        arrowprops=dict(arrowstyle="->", lw=2))
-
-    plt.savefig(file_path, bbox_inches='tight', dpi=300)
-    plt.close()
-
+    # Render as PNG
+    dot.render(file_path, cleanup=True)
 
 
 def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pdf_path):
