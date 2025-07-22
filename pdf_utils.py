@@ -2,6 +2,8 @@ import os
 from fpdf import FPDF
 from groq_utils import get_project_plan, get_cover_letter
 import matplotlib.pyplot as plt
+from graphviz import Digraph
+
 
 def create_tools_flow_diagram(steps_dict, file_path):
     dot = Digraph(comment='Project Tech Flow', format='png', engine='dot')
