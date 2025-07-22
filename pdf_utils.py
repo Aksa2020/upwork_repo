@@ -4,20 +4,18 @@ from groq_utils import get_project_plan, get_cover_letter
 import matplotlib.pyplot as plt
 from graphviz import Digraph
 
-
-def create_tools_flow_diagram(steps_dict, file_path):
+def create_tools_flow_diagram(steps, file_path):
     dot = Digraph(comment='Project Tech Flow', format='png', engine='dot')
     dot.attr(rankdir='TB', nodesep='0.5', ranksep='0.7')
     dot.attr('node', shape='box', style='filled', fillcolor='#D6EAF8', fontsize='10')
 
-    for idx, (step_title, tools) in enumerate(steps_dict.items()):
-        label = f"{step_title}\n{tools}"
+    for idx, tool in enumerate(steps):
+        label = f"Step {idx+1}\n{tool}"
         dot.node(f'step{idx}', label)
 
-    for idx in range(len(steps_dict) - 1):
+    for idx in range(len(steps) - 1):
         dot.edge(f'step{idx}', f'step{idx + 1}')
 
-    # Render as PNG
     dot.render(file_path, cleanup=True)
 
 
