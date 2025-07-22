@@ -7,7 +7,7 @@ from matplotlib.patches import FancyBboxPatch
 import textwrap
 
 def create_tools_flow_diagram(steps, diagram_path):
-    """Create a comprehensive vertical flow diagram of ALL project steps"""
+    """Create a comprehensive vertical flow diagram of ALL project steps - optimized for PDF"""
     try:
         # Ensure we have valid steps
         if not steps or len(steps) == 0:
@@ -25,22 +25,38 @@ def create_tools_flow_diagram(steps, diagram_path):
             if not clean_step.split('.')[0].isdigit():
                 clean_step = f"{i}. {clean_step}"
             
-            # Wrap long text for better display
-            if len(clean_step) > 60:
-                # Split at colon if present, otherwise at 60 chars
+            # Wrap long text for better display - more aggressive wrapping for PDF
+            if len(clean_step) > 50:  # Reduced from 60
                 if ':' in clean_step:
                     title, tools = clean_step.split(':', 1)
                     clean_step = f"{title}:\n{tools.strip()}"
                 else:
-                    wrapped = textwrap.fill(clean_step, width=50)
+                    wrapped = textwrap.fill(clean_step, width=45)  # Reduced from 50
                     clean_step = wrapped
                     
             processed_steps.append(clean_step)
         
-        # Calculate figure dimensions
+        # Calculate figure dimensions - optimize for PDF (A4 aspect ratio)
         num_steps = len(processed_steps)
-        fig_height = max(8, num_steps * 1.2)  # Increased spacing
-        fig_width = 14
+        
+        # Limit maximum height to prevent PDF overflow
+        max_steps_per_diagram = 15
+        if num_steps > max_steps_per_diagram:
+            print(f"Warning: Too many steps ({num_steps}). Showing first {max_steps_per_diagram}")
+            processed_steps = processed_steps[:max_steps_per_diagram]
+            processed_steps.append(f"... and {num_steps - max_steps_per_diagram} more steps")
+            num_steps = len(processed_steps)
+        
+        # Optimize dimensions for A4 PDF (portrait)
+        # A4 is 210mm x 297mm, aspect ratio ~0.707
+        fig_width = 10  # Reduced from 14
+        step_height = 0.8  # Reduced from 1.2
+        fig_height = max(6, num_steps * step_height + 2)  # More compact
+        
+        # Ensure reasonable aspect ratio
+        if fig_height > fig_width * 1.5:  # If too tall
+            fig_height = fig_width * 1.4
+            step_height = (fig_height - 2) / num_steps
         
         fig, ax = plt.subplots(figsize=(fig_width, fig_height))
         ax.set_xlim(0, 10)
@@ -54,37 +70,45 @@ def create_tools_flow_diagram(steps, diagram_path):
             y_pos = num_steps - i
             color = colors[i % len(colors)]
             
-            # Create fancy box for each step
-            box = FancyBboxPatch((1, y_pos - 0.35), 8, 0.7,
-                               boxstyle="round,pad=0.1",
+            # Create more compact boxes
+            box_height = min(0.6, step_height * 0.8)  # Adaptive box height
+            box = FancyBboxPatch((1.5, y_pos - box_height/2), 7, box_height,
+                               boxstyle="round,pad=0.08",  # Reduced padding
                                facecolor=color,
                                edgecolor='#2196F3',
-                               linewidth=2)
+                               linewidth=1.5)  # Thinner lines
             ax.add_patch(box)
             
-            # Add step text
+            # Add step text with smaller font for compactness
+            font_size = max(8, min(10, 120 / len(step)))  # Adaptive font size
             ax.text(5, y_pos, step, ha='center', va='center',
-                   fontsize=10, fontweight='bold', wrap=False)
+                   fontsize=font_size, fontweight='bold', wrap=False)
             
-            # Add arrow to next step (except for last step)
+            # Add smaller arrows to next step
             if i < len(processed_steps) - 1:
-                arrow = patches.FancyArrowPatch((5, y_pos - 0.4), (5, y_pos - 0.6),
+                arrow_start_y = y_pos - box_height/2 - 0.1
+                arrow_end_y = y_pos - step_height + box_height/2 + 0.1
+                arrow = patches.FancyArrowPatch((5, arrow_start_y), (5, arrow_end_y),
                                               arrowstyle='->', 
-                                              mutation_scale=20,
+                                              mutation_scale=15,  # Smaller arrows
                                               color='#2196F3',
-                                              linewidth=3)
+                                              linewidth=2)
                 ax.add_patch(arrow)
         
-        # Add title
-        ax.text(5, num_steps + 0.5, 'Project Implementation Flow', 
-               ha='center', va='center', fontsize=16, fontweight='bold',
-               bbox=dict(boxstyle="round,pad=0.3", facecolor='#1976D2', edgecolor='black', alpha=0.8),
+        # Add compact title
+        ax.text(5, num_steps + 0.3, 'Project Implementation Flow', 
+               ha='center', va='center', fontsize=12, fontweight='bold',  # Smaller title
+               bbox=dict(boxstyle="round,pad=0.2", facecolor='#1976D2', edgecolor='black', alpha=0.8),
                color='white')
         
-        plt.tight_layout()
-        plt.savefig(diagram_path, bbox_inches='tight', dpi=200, format='png', facecolor='white')
+        plt.tight_layout(pad=0.5)  # Tighter layout
+        
+        # Save with higher DPI but optimized for PDF
+        plt.savefig(diagram_path, bbox_inches='tight', dpi=150, format='png', 
+                   facecolor='white', edgecolor='none', pad_inches=0.1)
         plt.close()
-        print(f"Diagram saved successfully to {diagram_path}")
+        print(f"PDF-optimized diagram saved successfully to {diagram_path}")
+        print(f"Final dimensions: {fig_width}x{fig_height} inches")
         
     except Exception as e:
         print(f"Error creating flow diagram: {e}")
@@ -262,6 +286,20 @@ def extract_steps_from_project_plan(project_plan):
         traceback.print_exc()
         return [f"Error processing project plan: {str(e)}"]
 
+def get_image_dimensions_mm(image_path):
+    """Get image dimensions in millimeters for PDF"""
+    try:
+        from PIL import Image
+        with Image.open(image_path) as img:
+            width_px, height_px = img.size
+            dpi = img.info.get('dpi', (72, 72))[0]  # Default to 72 DPI if not specified
+            width_mm = (width_px / dpi) * 25.4  # Convert inches to mm
+            height_mm = (height_px / dpi) * 25.4
+            return width_mm, height_mm
+    except Exception as e:
+        print(f"Error getting image dimensions: {e}")
+        return None, None
+
 def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pdf_path):
     """Save project solution with diagram to PDF"""
     if not project_plan:
@@ -298,31 +336,66 @@ def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pd
     
     pdf.ln(5)
     
-    # Add diagram if it exists - FIXED VERSION
+    # Add diagram if it exists - IMPROVED VERSION
     if os.path.exists(diagram_path):
         try:
-            # Always add diagram on a new page to ensure it's fully visible
+            # Always add diagram on a new page
             pdf.add_page()
             
             pdf.set_font("Arial", style="B", size=12)
             pdf.cell(0, 10, "Project Flow Diagram:", ln=True)
             pdf.ln(5)
             
-            # Add image with proper sizing - start from top of new page
-            # Calculate proper image dimensions to fit the page
-            page_width = 210  # A4 width in mm
-            page_height = 297  # A4 height in mm
+            # PDF page dimensions (A4 in mm)
+            page_width = 210
+            page_height = 297
             margin = 10
-            available_width = page_width - (2 * margin)
-            available_height = page_height - 40  # Leave space for header and margins
+            header_space = 25  # Space for "Project Flow Diagram:" header
             
-            # Add image with calculated dimensions
-            pdf.image(diagram_path, x=margin, y=30, w=available_width)
+            available_width = page_width - (2 * margin)  # 190mm
+            available_height = page_height - header_space - margin  # ~262mm
+            
+            # Get actual image dimensions
+            img_width_mm, img_height_mm = get_image_dimensions_mm(diagram_path)
+            
+            if img_width_mm and img_height_mm:
+                print(f"Image dimensions: {img_width_mm:.1f}mm x {img_height_mm:.1f}mm")
+                print(f"Available space: {available_width}mm x {available_height}mm")
+                
+                # Calculate scaling factor to fit both width and height
+                width_scale = available_width / img_width_mm
+                height_scale = available_height / img_height_mm
+                scale_factor = min(width_scale, height_scale, 1.0)  # Don't scale up
+                
+                final_width = img_width_mm * scale_factor
+                final_height = img_height_mm * scale_factor
+                
+                print(f"Scale factor: {scale_factor:.3f}")
+                print(f"Final size: {final_width:.1f}mm x {final_height:.1f}mm")
+                
+                # Center the image horizontally
+                x_offset = margin + (available_width - final_width) / 2
+                
+                # Add image with calculated dimensions
+                pdf.image(diagram_path, x=x_offset, y=header_space, w=final_width, h=final_height)
+                
+                # If image is still too tall, add a note
+                if final_height > available_height:
+                    pdf.ln(10)
+                    pdf.set_font("Arial", size=9, style="I")
+                    pdf.cell(0, 5, "Note: Diagram may extend beyond page. Check the PNG file for complete view.", ln=True)
+                    
+            else:
+                # Fallback: try to fit with estimated dimensions
+                print("Could not determine image dimensions, using fallback method")
+                # Try to fit the image by width first
+                pdf.image(diagram_path, x=margin, y=header_space, w=available_width)
             
         except Exception as e:
             print(f"Error adding diagram to PDF: {e}")
             pdf.set_font("Arial", size=10)
-            pdf.cell(0, 10, "Diagram could not be loaded.", ln=True)
+            pdf.cell(0, 10, f"Diagram could not be loaded. Error: {str(e)}", ln=True)
+            pdf.cell(0, 10, f"Please check the PNG file: {diagram_path}", ln=True)
     else:
         pdf.set_font("Arial", size=10)
         pdf.cell(0, 10, "Flow diagram was not generated.", ln=True)
