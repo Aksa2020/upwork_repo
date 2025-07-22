@@ -298,19 +298,27 @@ def save_solution_pdf(job_id, title, description, project_plan, diagram_path, pd
     
     pdf.ln(5)
     
-    # Add diagram if it exists
+    # Add diagram if it exists - FIXED VERSION
     if os.path.exists(diagram_path):
         try:
-            current_y = pdf.get_y()
-            if current_y > 220:
-                pdf.add_page()
+            # Always add diagram on a new page to ensure it's fully visible
+            pdf.add_page()
             
             pdf.set_font("Arial", style="B", size=12)
             pdf.cell(0, 10, "Project Flow Diagram:", ln=True)
-            pdf.ln(2)
+            pdf.ln(5)
             
-            # Add image with proper sizing
-            pdf.image(diagram_path, x=5, y=pdf.get_y(), w=200)
+            # Add image with proper sizing - start from top of new page
+            # Calculate proper image dimensions to fit the page
+            page_width = 210  # A4 width in mm
+            page_height = 297  # A4 height in mm
+            margin = 10
+            available_width = page_width - (2 * margin)
+            available_height = page_height - 40  # Leave space for header and margins
+            
+            # Add image with calculated dimensions
+            pdf.image(diagram_path, x=margin, y=30, w=available_width)
+            
         except Exception as e:
             print(f"Error adding diagram to PDF: {e}")
             pdf.set_font("Arial", size=10)
