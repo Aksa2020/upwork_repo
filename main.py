@@ -6,7 +6,7 @@ from pdf_utils import generate_all_pdfs_for_job
 from utils import load_processed_jobs, save_processed_jobs, filter_jobs
 
 st.set_page_config(page_title="Upwork Proposal Generator", layout="wide")
-st.title("Upwork Project PDF Generator with LLM + Memory")
+st.title("Upwork Job Post")
 
 # Permanent Memory File
 memory_file = "processed_jobs.json"
