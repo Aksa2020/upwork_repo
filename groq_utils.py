@@ -1,24 +1,4 @@
-"""
-Enhanced Groq Utilities for AI Project Planning and Proposal Generation
 
-This module provides sophisticated AI-driven project planning and cover letter generation
-for technical proposals, with emphasis on modern ML/AI technologies and deployment strategies.
-
-Requirements:
-    - Python 3.8+
-    - streamlit>=1.28.0
-    - groq>=0.4.0
-    - typing (built-in)
-    - logging (built-in)
-
-Installation:
-    pip install -r requirements.txt
-
-Environment Setup:
-    Create .streamlit/secrets.toml with:
-    [groq]
-    api_key = "your_groq_api_key_here"
-"""
 
 import streamlit as st
 from groq import Groq
