@@ -5,10 +5,179 @@ import logging
 import requests
 import json
 from datetime import datetime
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+class TechnicalDomainMapper:
+    """
+    Maps client-mentioned skills to deep technical domain specifications.
+    Expands broad domains into comprehensive technical stacks and methodologies.
+    """
+    
+    def __init__(self):
+        """Initialize domain mapping with comprehensive technical specifications."""
+        self.domain_mappings = {
+            'data_science': {
+                'keywords': ['data science', 'data scientist', 'analytics', 'statistical analysis', 'predictive modeling'],
+                'deep_stack': {
+                    'core_frameworks': ['Pandas', 'NumPy', 'Scikit-learn', 'SciPy', 'Statsmodels'],
+                    'visualization': ['Matplotlib', 'Seaborn', 'Plotly', 'Bokeh', 'Altair'],
+                    'ml_algorithms': ['Random Forest', 'XGBoost', 'LightGBM', 'CatBoost', 'Linear/Logistic Regression'],
+                    'statistical_methods': ['Hypothesis Testing', 'A/B Testing', 'Time Series Analysis', 'Bayesian Statistics'],
+                    'data_processing': ['Feature Engineering', 'Data Cleaning', 'ETL Pipelines', 'Data Validation'],
+                    'deployment': ['Jupyter Notebooks', 'Streamlit', 'Flask', 'Docker', 'AWS SageMaker']
+                },
+                'methodologies': ['CRISP-DM', 'KDD Process', 'Cross-validation', 'Feature Selection', 'Model Interpretability']
+            },
+            
+            'computer_vision': {
+                'keywords': ['computer vision', 'cv', 'image processing', 'object detection', 'image recognition', 'opencv'],
+                'deep_stack': {
+                    'core_frameworks': ['OpenCV', 'PIL/Pillow', 'ImageIO', 'Albumentations', 'imgaug'],
+                    'deep_learning': ['PyTorch', 'TensorFlow', 'Keras', 'torchvision', 'tf.keras.applications'],
+                    'architectures': ['CNN', 'ResNet', 'EfficientNet', 'Vision Transformers', 'MobileNet'],
+                    'detection_models': ['YOLO (v5/v8/v11)', 'Faster R-CNN', 'SSD', 'RetinaNet', 'DETR'],
+                    'segmentation': ['U-Net', 'Mask R-CNN', 'DeepLab', 'Segment Anything Model (SAM)', 'FCN'],
+                    'preprocessing': ['Image Augmentation', 'Normalization', 'Geometric Transformations', 'Color Space Conversion'],
+                    'evaluation': ['mAP', 'IoU', 'Precision/Recall', 'F1-Score', 'Confusion Matrix']
+                },
+                'methodologies': ['Transfer Learning', 'Data Augmentation', 'Multi-scale Training', 'Test Time Augmentation']
+            },
+            
+            'machine_learning': {
+                'keywords': ['machine learning', 'ml', 'predictive modeling', 'classification', 'regression', 'clustering'],
+                'deep_stack': {
+                    'supervised_learning': ['Classification', 'Regression', 'Ensemble Methods', 'Support Vector Machines'],
+                    'unsupervised_learning': ['K-Means', 'Hierarchical Clustering', 'DBSCAN', 'PCA', 't-SNE'],
+                    'frameworks': ['Scikit-learn', 'XGBoost', 'LightGBM', 'CatBoost', 'Optuna'],
+                    'deep_learning': ['Neural Networks', 'Backpropagation', 'Gradient Descent', 'Regularization'],
+                    'model_selection': ['Cross-validation', 'Grid Search', 'Random Search', 'Bayesian Optimization'],
+                    'evaluation': ['Accuracy', 'Precision/Recall', 'ROC-AUC', 'RMSE', 'MAE'],
+                    'deployment': ['Model Serialization', 'API Development', 'Model Monitoring', 'A/B Testing']
+                },
+                'methodologies': ['Feature Engineering', 'Hyperparameter Tuning', 'Model Interpretability', 'Bias Detection']
+            },
+            
+            'natural_language_processing': {
+                'keywords': ['nlp', 'natural language processing', 'text analysis', 'sentiment analysis', 'text mining'],
+                'deep_stack': {
+                    'preprocessing': ['Tokenization', 'Stemming', 'Lemmatization', 'Stop Words', 'Text Cleaning'],
+                    'traditional_methods': ['TF-IDF', 'N-grams', 'Bag of Words', 'Word2Vec', 'GloVe'],
+                    'modern_nlp': ['Transformers', 'BERT', 'RoBERTa', 'GPT', 'T5', 'DistilBERT'],
+                    'frameworks': ['NLTK', 'spaCy', 'Transformers (Hugging Face)', 'Gensim', 'TextBlob'],
+                    'tasks': ['Named Entity Recognition', 'Part-of-Speech Tagging', 'Dependency Parsing', 'Coreference Resolution'],
+                    'applications': ['Sentiment Analysis', 'Text Classification', 'Question Answering', 'Text Summarization'],
+                    'embeddings': ['Word Embeddings', 'Sentence Embeddings', 'Document Embeddings', 'Contextual Embeddings']
+                },
+                'methodologies': ['Transfer Learning', 'Fine-tuning', 'Prompt Engineering', 'Few-shot Learning']
+            },
+            
+            'deep_learning': {
+                'keywords': ['deep learning', 'neural networks', 'dl', 'artificial neural networks', 'cnn', 'rnn', 'lstm'],
+                'deep_stack': {
+                    'frameworks': ['PyTorch', 'TensorFlow', 'Keras', 'JAX', 'Lightning'],
+                    'architectures': ['CNN', 'RNN', 'LSTM', 'GRU', 'Transformer', 'Autoencoder'],
+                    'optimization': ['Adam', 'SGD', 'RMSprop', 'Learning Rate Scheduling', 'Gradient Clipping'],
+                    'regularization': ['Dropout', 'Batch Normalization', 'Layer Normalization', 'Weight Decay'],
+                    'advanced_techniques': ['Transfer Learning', 'Multi-task Learning', 'Meta-learning', 'Self-supervised Learning'],
+                    'hardware_acceleration': ['GPU Computing', 'CUDA', 'Mixed Precision Training', 'Distributed Training'],
+                    'model_optimization': ['Quantization', 'Pruning', 'Knowledge Distillation', 'ONNX Conversion']
+                },
+                'methodologies': ['Gradient Descent', 'Backpropagation', 'Hyperparameter Tuning', 'Model Architecture Search']
+            },
+            
+            'data_engineering': {
+                'keywords': ['data engineering', 'etl', 'data pipeline', 'big data', 'data infrastructure'],
+                'deep_stack': {
+                    'data_processing': ['Apache Spark', 'Pandas', 'Dask', 'Polars', 'Apache Beam'],
+                    'databases': ['PostgreSQL', 'MongoDB', 'Redis', 'Cassandra', 'InfluxDB'],
+                    'cloud_platforms': ['AWS', 'Google Cloud', 'Azure', 'Snowflake', 'Databricks'],
+                    'orchestration': ['Apache Airflow', 'Prefect', 'Dagster', 'Luigi', 'Kubeflow'],
+                    'streaming': ['Apache Kafka', 'Apache Storm', 'Apache Flink', 'Amazon Kinesis'],
+                    'containerization': ['Docker', 'Kubernetes', 'Apache Spark on K8s', 'Helm Charts'],
+                    'monitoring': ['Prometheus', 'Grafana', 'ELK Stack', 'DataDog', 'New Relic']
+                },
+                'methodologies': ['Data Modeling', 'Schema Design', 'Data Quality', 'Data Governance', 'CDC (Change Data Capture)']
+            },
+            
+            'web_development': {
+                'keywords': ['web development', 'frontend', 'backend', 'full stack', 'react', 'django', 'flask'],
+                'deep_stack': {
+                    'frontend': ['React', 'Vue.js', 'Angular', 'JavaScript', 'TypeScript', 'HTML5', 'CSS3'],
+                    'backend': ['Django', 'Flask', 'FastAPI', 'Node.js', 'Express.js', 'Spring Boot'],
+                    'databases': ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'SQLite'],
+                    'deployment': ['Docker', 'Kubernetes', 'AWS', 'Heroku', 'Vercel', 'Netlify'],
+                    'testing': ['Jest', 'Pytest', 'Selenium', 'Cypress', 'Unit Testing', 'Integration Testing'],
+                    'api_development': ['REST APIs', 'GraphQL', 'WebSockets', 'gRPC', 'API Documentation'],
+                    'state_management': ['Redux', 'Vuex', 'Context API', 'MobX', 'Zustand']
+                },
+                'methodologies': ['Agile Development', 'Test-Driven Development', 'CI/CD', 'Version Control (Git)', 'Code Review']
+            }
+        }
+    
+    def identify_domains(self, skills_text: str) -> List[str]:
+        """
+        Identify technical domains from client's skill requirements.
+        
+        Args:
+            skills_text (str): Client's mentioned skills
+            
+        Returns:
+            List[str]: List of identified domain keys
+        """
+        skills_lower = skills_text.lower()
+        identified_domains = []
+        
+        for domain_key, domain_config in self.domain_mappings.items():
+            for keyword in domain_config['keywords']:
+                if keyword in skills_lower:
+                    identified_domains.append(domain_key)
+                    break
+        
+        # Remove duplicates while preserving order
+        return list(dict.fromkeys(identified_domains))
+    
+    def get_domain_deep_stack(self, domain_keys: List[str]) -> Dict[str, any]:
+        """
+        Get comprehensive technical stack for identified domains.
+        
+        Args:
+            domain_keys (List[str]): List of domain keys
+            
+        Returns:
+            Dict[str, any]: Comprehensive technical specifications
+        """
+        combined_stack = {
+            'frameworks': set(),
+            'tools': set(),
+            'methodologies': set(),
+            'domain_specific': {}
+        }
+        
+        for domain_key in domain_keys:
+            if domain_key in self.domain_mappings:
+                domain_config = self.domain_mappings[domain_key]
+                
+                # Add domain-specific stack
+                combined_stack['domain_specific'][domain_key] = domain_config['deep_stack']
+                
+                # Collect all frameworks and tools
+                for category, items in domain_config['deep_stack'].items():
+                    if isinstance(items, list):
+                        combined_stack['frameworks'].update(items)
+                
+                # Add methodologies
+                combined_stack['methodologies'].update(domain_config.get('methodologies', []))
+        
+        # Convert sets back to lists for JSON serialization
+        combined_stack['frameworks'] = list(combined_stack['frameworks'])
+        combined_stack['tools'] = list(combined_stack['tools'])
+        combined_stack['methodologies'] = list(combined_stack['methodologies'])
+        
+        return combined_stack
 
 class WebSearchService:
     """
@@ -65,17 +234,25 @@ class WebSearchService:
             self.search_enabled = False
             self.active_api = None
     
-    def search_latest_tools(self, query: str, max_results: int = 5) -> List[Dict]:
+    def search_domain_specific_trends(self, domain: str, max_results: int = 5) -> List[Dict]:
         """
-        Search for latest information using the available API.
+        Search for domain-specific trends and best practices.
         
         Args:
-            query (str): Search query
-            max_results (int): Maximum number of results to return
+            domain (str): Technical domain (e.g., "computer vision", "data science")
+            max_results (int): Maximum number of results
             
         Returns:
-            List[Dict]: Search results with titles, snippets, and links
+            List[Dict]: Search results with domain-specific insights
         """
+        if not self.search_enabled or not self.active_api:
+            return []
+        
+        query = f"{domain} best practices tools frameworks 2024 2025 latest trends"
+        return self.search_latest_tools(query, max_results)
+    
+    def search_latest_tools(self, query: str, max_results: int = 5) -> List[Dict]:
+        """Search for latest information using the available API."""
         if not self.search_enabled or not self.active_api:
             logger.info("Web search disabled, returning empty results")
             return []
@@ -104,7 +281,7 @@ class WebSearchService:
         
         payload = {
             "api_key": api_config['key'],
-            "query": f"{query} 2024 2025 latest tools frameworks",
+            "query": query,
             "search_depth": "basic",
             "include_answer": False,
             "include_raw_content": False,
@@ -139,7 +316,7 @@ class WebSearchService:
         }
         
         params = {
-            "q": f"{query} 2024 2025 latest tools frameworks",
+            "q": query,
             "count": max_results,
             "safesearch": "moderate"
         }
@@ -168,7 +345,7 @@ class WebSearchService:
         params = {
             "key": api_config['key'],
             "cx": api_config['cx'],
-            "q": f"{query} 2024 2025 latest tools frameworks",
+            "q": query,
             "num": min(max_results, 10),  # Google Custom Search max is 10
             "safe": "active"
         }
@@ -199,7 +376,7 @@ class WebSearchService:
         }
         
         params = {
-            "q": f"{query} 2024 2025 latest tools frameworks",
+            "q": query,
             "count": max_results,
             "safeSearch": "Moderate"
         }
@@ -228,7 +405,7 @@ class WebSearchService:
         params = {
             "api_key": api_config['key'],
             "engine": "google",
-            "q": f"{query} 2024 2025 latest tools frameworks",
+            "q": query,
             "num": max_results,
             "safe": "active"
         }
@@ -249,89 +426,75 @@ class WebSearchService:
                 })
         
         return results
-    
-    def get_trending_ai_tools(self, domain: str = "machine learning") -> str:
-        """
-        Get trending AI/ML tools and frameworks for a specific domain.
-        
-        Args:
-            domain (str): Domain to search for (e.g., "machine learning", "computer vision")
-            
-        Returns:
-            str: Formatted string of trending tools and technologies
-        """
-        query = f"best {domain} tools frameworks 2024 2025 trending"
-        results = self.search_latest_tools(query, max_results=3)
-        
-        if not results:
-            return ""
-        
-        trending_info = []
-        for result in results:
-            if result["snippet"]:
-                trending_info.append(f"• {result['snippet'][:200]}...")
-        
-        return "\n".join(trending_info) if trending_info else ""
 
 class GroqProjectPlanner:
     """
-    Professional AI project planning system using Groq's LLaMA models with web search capabilities.
-    
-    Generates technical project flows and cover letters optimized for
-    machine learning and AI development projects using current information.
+    Enhanced AI project planning system with deep domain expertise.
+    Automatically expands broad skills into comprehensive technical implementations.
     """
     
     def __init__(self):
-        """Initialize the Groq client and web search service."""
+        """Initialize the Groq client, web search service, and domain mapper."""
         try:
             self.client = Groq(api_key=st.secrets["groq"]["api_key"])
             self.model_name = "llama3-70b-8192"
             self.web_search = WebSearchService()
-            logger.info("Groq client and web search initialized successfully")
+            self.domain_mapper = TechnicalDomainMapper()
+            logger.info("Enhanced Groq client with domain mapping initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize Groq client: {e}")
             raise
     
-    def _get_current_tech_context(self, project_type: str, skills: str) -> str:
+    def _build_domain_specific_context(self, skills: str, use_web_search: bool = True) -> str:
         """
-        Get current technology context by searching specifically for the client's mentioned skills.
+        Build comprehensive domain-specific technical context.
         
         Args:
-            project_type (str): Type of project (extracted from title/description)
-            skills (str): Required skills mentioned by client
+            skills (str): Client's mentioned skills
+            use_web_search (bool): Whether to include current trends
             
         Returns:
-            str: Current technology context focused on client's specific skills
+            str: Domain-specific technical context
         """
-        if not self.web_search.search_enabled:
+        # Identify technical domains from skills
+        identified_domains = self.domain_mapper.identify_domains(skills)
+        
+        if not identified_domains:
             return ""
         
-        # Extract and prioritize specific skills mentioned by client
-        skill_keywords = [skill.strip().lower() for skill in skills.split(',')]
+        # Get deep technical stack for identified domains
+        domain_stack = self.domain_mapper.get_domain_deep_stack(identified_domains)
         
-        # Search specifically for each mentioned skill
-        current_context = []
-        processed_skills = set()
+        context_parts = []
         
-        for skill in skill_keywords[:3]:  # Focus on top 3 mentioned skills
-            if skill and skill not in processed_skills:
-                processed_skills.add(skill)
-                
-                # Create targeted search query for this specific skill
-                search_query = f"{skill} best practices tools frameworks 2024 2025"
-                trending_info = self.web_search.get_trending_ai_tools(search_query)
-                
-                if trending_info:
-                    current_context.append(f"\nCURRENT {skill.upper()} BEST PRACTICES & TOOLS:\n{trending_info}")
+        # Add domain-specific technical stacks
+        for domain_key, domain_config in domain_stack['domain_specific'].items():
+            domain_name = domain_key.replace('_', ' ').title()
+            context_parts.append(f"\n=== {domain_name.upper()} DEEP TECHNICAL STACK ===")
+            
+            for category, tools in domain_config.items():
+                if isinstance(tools, list) and tools:
+                    category_name = category.replace('_', ' ').title()
+                    context_parts.append(f"\n{category_name}:")
+                    context_parts.append(f"- {', '.join(tools[:8])}")  # Limit to first 8 items
         
-        # If no specific skills found, fall back to general project context
-        if not current_context and project_type:
-            fallback_query = f"{project_type} latest tools"
-            trending_info = self.web_search.get_trending_ai_tools(fallback_query)
-            if trending_info:
-                current_context.append(f"\nCURRENT PROJECT-RELEVANT TOOLS:\n{trending_info}")
+        # Add current trends from web search
+        if use_web_search and self.web_search.search_enabled:
+            try:
+                for domain_key in identified_domains[:2]:  # Limit to first 2 domains
+                    domain_name = domain_key.replace('_', ' ')
+                    trends = self.web_search.search_domain_specific_trends(domain_name, 3)
+                    
+                    if trends:
+                        context_parts.append(f"\n=== CURRENT {domain_name.upper()} TRENDS 2024-2025 ===")
+                        for trend in trends:
+                            if trend.get('snippet'):
+                                context_parts.append(f"• {trend['snippet'][:200]}...")
+                        
+            except Exception as e:
+                logger.error(f"Failed to get domain trends: {e}")
         
-        return "\n".join(current_context)
+        return "\n".join(context_parts)
     
     def generate_technical_project_flow(
         self, 
@@ -341,7 +504,7 @@ class GroqProjectPlanner:
         use_web_search: bool = True
     ) -> Tuple[str, Dict[str, str]]:
         """
-        Generate a comprehensive technical project flow with current tools and technologies.
+        Generate a comprehensive domain-specific technical project flow.
         
         Args:
             title (str): Project title
@@ -353,108 +516,53 @@ class GroqProjectPlanner:
             Tuple[str, Dict[str, str]]: Complete project flow and parsed steps dictionary
         """
         
-        technical_stack_context = """
-        CORE TECHNICAL EXPERTISE & INFRASTRUCTURE:
+        # Build domain-specific context
+        domain_context = self._build_domain_specific_context(skills, use_web_search)
         
-        Core ML/AI Frameworks:
-        - PyTorch 2.x, TensorFlow 2.x, Keras, Scikit-learn
-        - Hugging Face Transformers, LangChain, LlamaIndex
-        - OpenAI GPT-4/GPT-4-Turbo, Anthropic Claude, Cohere
+        # Identify domains for specialized prompting
+        identified_domains = self.domain_mapper.identify_domains(skills)
+        domain_focus = ", ".join([d.replace('_', ' ').title() for d in identified_domains])
         
-        Computer Vision & Deep Learning:
-        - YOLOv8/YOLOv11/YOLOv12, Detectron2, MMDetection
-        - OpenCV, Pillow, ImageIO, Albumentations
-        - CNN architectures: ResNet, EfficientNet, Vision Transformers
-        - Object Detection: Faster R-CNN, SSD, RetinaNet, DETR
-        - Segmentation: Mask R-CNN, U-Net, DeepLab, Segment Anything
+        system_prompt = f"""
+        You are a Senior Technical Architect specializing in {domain_focus if domain_focus else 'Advanced Technical Solutions'}.
         
-        NLP & Generative AI:
-        - Transformers, BERT, RoBERTa, T5, GPT variants
-        - Stable Diffusion, ControlNet, LoRA fine-tuning
-        - Text generation, sentiment analysis, NER, summarization
-        - Vector databases: Pinecone, Weaviate, ChromaDB, FAISS
+        Create DOMAIN-SPECIFIC project flows that:
+        - Dive DEEP into the technical domains mentioned by the client
+        - Use advanced, domain-specific tools and frameworks
+        - Follow industry best practices for the identified domains
+        - Include specialized methodologies and techniques
+        - Demonstrate expert-level understanding of the technical domain
+        - Progress from foundational setup to advanced implementation
         
-        Data Processing & Analytics:
-        - Pandas, NumPy, Polars, Dask for large-scale processing
-        - Data annotation: LabelImg, CVAT, Label Studio, Roboflow
-        - ETL pipelines with Apache Airflow, Prefect
-        - Feature stores: Feast, Tecton
+        CRITICAL: When a client mentions broad domains like "data science", "computer vision", or "machine learning",
+        create flows that showcase DEEP expertise in those specific domains using the most relevant and advanced tools.
         
-        MLOps & Deployment:
-        - Docker, Kubernetes, Helm charts
-        - MLflow, Weights & Biases, Neptune for experiment tracking
-        - CI/CD: GitHub Actions, GitLab CI, Jenkins
-        - Model serving: FastAPI, Flask, BentoML, Seldon Core
-        - Monitoring: Prometheus, Grafana, DataDog
-        
-        Cloud Infrastructure:
-        - AWS: EC2 (p3.xlarge, p4d.24xlarge), SageMaker, Lambda, ECS
-        - Google Cloud: Compute Engine (A100, V100 GPUs), Vertex AI, GKE
-        - Azure: ML Studio, Container Instances, AKS
-        - Edge deployment: Raspberry Pi 4, NVIDIA Jetson, Intel NUC
-        
-        API Development & Integration:
-        - FastAPI, Django REST Framework, GraphQL
-        - gRPC for high-performance microservices
-        - WebSocket for real-time applications
-        - Redis, PostgreSQL, MongoDB for data persistence
-        """
-        
-        # Get current technology context from web search
-        current_tech_context = ""
-        if use_web_search:
-            try:
-                project_type = f"{title} {description}"
-                current_tech_context = self._get_current_tech_context(project_type, skills)
-                if current_tech_context:
-                    logger.info("Added current technology trends from web search")
-            except Exception as e:
-                logger.error(f"Failed to get current tech context: {e}")
-        
-        system_prompt = """
-        You are a Senior AI/ML Solutions Architect creating technical project flows that STRICTLY FOCUS on the client's specified skills.
-        
-        Generate implementation plans that:
-        - PRIORITIZE the exact skills and technologies mentioned by the client
-        - Build the entire flow around the client's specified skill requirements
-        - Only include tools and frameworks that directly relate to the mentioned skills
-        - Avoid generic or unrelated technologies not specified by the client
-        - Keep each step focused on implementing the client's specific skill requirements
-        - Use the client's mentioned skills as the primary foundation for all technical decisions
-        
-        CRITICAL: The client's specified skills should be the main focus and foundation of every step in the project flow.
-        
-        Create flows that demonstrate deep expertise in the client's exact requirements.
+        Focus Areas: {domain_focus if domain_focus else 'General Technical Implementation'}
         """
         
         user_prompt = f"""
-        CLIENT'S SPECIFIC REQUIREMENTS:
+        CLIENT PROJECT REQUIREMENTS:
         Title: {title}
         Description: {description}
-        REQUIRED SKILLS (PRIORITY FOCUS): {skills}
+        Required Skills: {skills}
         
-        BASE TECHNICAL KNOWLEDGE:
-        {technical_stack_context}
-        {current_tech_context}
+        DOMAIN-SPECIFIC TECHNICAL CONTEXT:
+        {domain_context}
         
-        DELIVERABLE REQUIREMENTS:
-        Create a technical implementation plan that is LASER-FOCUSED on the client's specified skills: "{skills}"
+        TASK: Create a deep, domain-specific technical implementation flow that demonstrates expert-level knowledge in the client's mentioned domains.
         
-        Format as numbered steps with this exact structure:
+        REQUIREMENTS:
+        - Each step should use advanced, domain-specific tools and techniques
+        - Progress from setup through advanced implementation
+        - Include domain-specific best practices and methodologies
+        - Use the most current and relevant tools for each identified domain
+        - Demonstrate deep technical expertise beyond basic implementations
+        
+        Format: Numbered steps with tools/frameworks:
         1. Step Name: Tool1, Tool2, Framework3
         2. Step Name: Tool1, Tool2, Framework3
         
-        STRICT REQUIREMENTS:
-        - Every step must directly utilize or implement the client's specified skills: "{skills}"
-        - Prioritize tools and frameworks that are specifically mentioned or directly related to: "{skills}"
-        - If the client mentions specific technologies (e.g., "PyTorch", "React", "AWS"), make them central to the flow
-        - Avoid generic tools unless they directly support the client's specified skill requirements
-        - Each step should demonstrate expertise in the exact skills the client is looking for
-        - NO version numbers, performance metrics, or hardware specifications
-        - Focus on the client's skill requirements, not general best practices
-        
-        The project flow should read like a demonstration of mastery in the client's specific skill requirements.
-        
+        Create 6-10 comprehensive steps that show mastery of the technical domains.
         NO markdown formatting. Only numbered steps with colons.
         """
         
@@ -465,7 +573,7 @@ class GroqProjectPlanner:
                     {"role": "user", "content": user_prompt}
                 ],
                 model=self.model_name,
-                temperature=0.2,  # Lower temperature for more consistent technical output
+                temperature=0.3,
                 max_tokens=2048,
                 top_p=0.9
             )
@@ -473,7 +581,7 @@ class GroqProjectPlanner:
             project_flow = chat_completion.choices[0].message.content.strip()
             parsed_steps = self._parse_project_steps(project_flow)
             
-            logger.info(f"Generated project flow with {len(parsed_steps)} steps (web search: {use_web_search})")
+            logger.info(f"Generated domain-specific project flow with {len(parsed_steps)} steps for domains: {domain_focus}")
             return project_flow, parsed_steps
             
         except Exception as e:
@@ -490,81 +598,57 @@ class GroqProjectPlanner:
         use_web_search: bool = True
     ) -> str:
         """
-        Generate a sophisticated, results-oriented cover letter with current technology insights.
-        
-        Args:
-            title (str): Project title
-            description (str): Project description
-            skills (str): Required skills
-            client_budget (str, optional): Project budget range
-            timeline (str, optional): Expected timeline
-            use_web_search (bool): Whether to include current trends in the cover letter
-            
-        Returns:
-            str: A professional cover letter with current technology awareness
+        Generate a domain-specific professional cover letter.
         """
         
-        # Get current market insights focused on client's specific skills
-        market_context = ""
-        if use_web_search:
-            try:
-                # Search specifically for the client's mentioned skills
-                skill_specific_trends = self._get_current_tech_context(title, skills)
-                if skill_specific_trends:
-                    market_context = f"\n\nCLIENT'S SKILL-SPECIFIC MARKET INSIGHTS:\n{skill_specific_trends[:600]}..."
-                    logger.info("Added skill-specific market insights to cover letter context")
-            except Exception as e:
-                logger.error(f"Failed to get skill-specific market context: {e}")
+        # Get domain-specific context
+        domain_context = self._build_domain_specific_context(skills, use_web_search)
+        identified_domains = self.domain_mapper.identify_domains(skills)
+        domain_focus = ", ".join([d.replace('_', ' ').title() for d in identified_domains])
         
-        system_prompt = """
-        You are a Senior Technical Lead writing high-converting cover letters that DIRECTLY ADDRESS the client's specific skill requirements.
+        budget_context = f"Budget: {client_budget}" if client_budget else ""
+        timeline_context = f"Timeline: {timeline}" if timeline else ""
         
-        CO-STAR Framework with Skill-Focus:
-        - **Context**: Applying to a technical job with specific skill requirements on Upwork.
-        - **Objective**: Demonstrate EXACT expertise in the client's specified skills.
-        - **Style**: Skill-focused, results-driven, directly addressing client's technical needs.
-        - **Tone**: Confident expertise in the client's specific skill areas.
-        - **Audience**: Clients looking for specific technical skills and expertise.
-        - **Response Format** (strictly follow):
-        1. **Pitch** – Hook that directly mentions client's specified skills.
-        2. **Related Experience** – Achievements using the EXACT skills the client mentioned.
-        3. **Portfolio** – Examples specifically showcasing the client's required skills.
-        4. **CTA** – Invite discussion about their specific skill requirements.
+        system_prompt = f"""
+        You are a Senior Technical Lead with deep expertise in {domain_focus if domain_focus else 'Advanced Technical Solutions'}.
         
-        CRITICAL: Every sentence should demonstrate expertise in the client's specified skills.
+        Write cover letters that demonstrate DEEP domain expertise by:
+        - Mentioning specific, advanced tools and techniques from the client's domain
+        - Showing understanding of domain-specific challenges and solutions
+        - Using technical terminology that proves expertise in the identified domains
+        - Highlighting relevant experience with domain-specific implementations
+        - Addressing the technical complexity of the client's specific domain needs
+        
+        Target Domains: {domain_focus if domain_focus else 'General Technical'}
         """
         
         user_prompt = f"""
-        CLIENT'S SPECIFIC SKILL REQUIREMENTS:
+        CLIENT REQUIREMENTS:
         Title: {title}
         Description: {description}
-        REQUIRED SKILLS (PRIMARY FOCUS): {skills}
+        Required Skills: {skills}
         {budget_context}
         {timeline_context}
-        {market_context}
         
-        SKILL-SPECIFIC EXPERIENCE TO HIGHLIGHT:
-        Based on the client's required skills "{skills}", emphasize relevant experience such as:
-        - Direct projects using the client's specified technologies/skills
-        - Quantifiable results achieved with the exact skills they mentioned
-        - Advanced implementations in their specified skill areas
-        - Problem-solving expertise in their particular technical domain
-        - Current best practices in their specified skill requirements
+        DOMAIN-SPECIFIC CONTEXT:
+        {domain_context}
         
-        SUCCESS STORIES (ADAPT TO CLIENT'S SKILLS):
-        - Select examples that directly showcase expertise in: "{skills}"
-        - Emphasize achievements using the client's specified technologies
-        - Highlight results that demonstrate mastery of their required skills
-        - Focus on outcomes that matter for their specific technical needs
+        TASK: Write a 150-200 word cover letter that demonstrates DEEP expertise in the client's specific technical domains.
         
-        TASK:
-        Generate a 150–200 word cover letter that is LASER-FOCUSED on the client's skill requirements:
-        - Pitch: Directly mention and demonstrate expertise in "{skills}"
-        - Experience: Show specific achievements using the skills they mentioned
-        - Portfolio: Reference projects that showcase their required skills
-        - CTA: Invite discussion about solving their specific technical challenges
+        FOCUS:
+        - Use domain-specific terminology and advanced concepts
+        - Mention relevant tools, frameworks, and methodologies from the domain context
+        - Show understanding of domain-specific challenges
+        - Highlight experience with similar domain-specific projects
+        - Demonstrate thought leadership in the client's technical areas
         
-        Every sentence should reinforce your expertise in the client's specified skills: "{skills}"
+        Structure:
+        1. Hook with domain expertise
+        2. Specific domain experience and achievements
+        3. Relevant portfolio examples
+        4. Technical discussion invitation
+        
+        Write as an expert in: {domain_focus if domain_focus else 'advanced technical solutions'}
         """
         
         try:
@@ -574,18 +658,28 @@ class GroqProjectPlanner:
                     {"role": "user", "content": user_prompt}
                 ],
                 model=self.model_name,
-                temperature=0.4,  # Slightly higher temperature for more natural writing
+                temperature=0.4,
                 max_tokens=1024,
                 top_p=0.95
             )
             
             cover_letter = chat_completion.choices[0].message.content.strip()
-            logger.info(f"Generated professional cover letter (web search: {use_web_search})")
+            logger.info(f"Generated domain-specific cover letter for: {domain_focus}")
             return cover_letter
             
         except Exception as e:
             logger.error(f"Error generating cover letter: {e}")
             raise
+    
+    def _parse_project_steps(self, project_flow: str) -> Dict[str, str]:
+        """Parse the generated project flow into a structured dictionary."""
+        steps_dict = {}
+        
+        try:
+            for line in project_flow.split('\n'):
+                line = line.strip()
+                if line and ':' in line
+                
     
     def _parse_project_steps(self, project_flow: str) -> Dict[str, str]:
         """
