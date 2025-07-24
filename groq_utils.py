@@ -161,75 +161,63 @@ class GroqProjectPlanner:
         client_budget: Optional[str] = None,
         timeline: Optional[str] = None
     ) -> str:
-       """
-Generate a sophisticated, results-oriented cover letter for technical proposals using the CO-STAR prompting technique and respond in the following format:
-
-- Pitch (first line)
-- Related experience
-- Portfolio mention
-- Ask to contact/DM if interested
-
-Args:
-    title (str): Project title
-    description (str): Project description
-    skills (str): Required skills
-    client_budget (str, optional): Project budget range
-    timeline (str, optional): Expected timeline
-
-Returns:
-    str: A professional cover letter with fixed format and tone
-"""
-
-system_prompt = """
-You are a Senior Technical Lead writing high-converting technical cover letters for Upwork proposals. Use the CO-STAR framework to guide your tone, structure, and relevance.
-
-CO-STAR Breakdown:
-- **Context**: You’re applying to a job post on Upwork related to AI/ML or software engineering.
-- **Objective**: Generate a concise, effective cover letter that matches the client’s needs with your qualifications.
-- **Style**: Clear, professional, and focused on measurable results.
-- **Tone**: Friendly, confident, client-centered.
-- **Audience**: Clients posting technical jobs (AI, ML, software) on Upwork. May or may not be highly technical.
-- **Response Format** (strictly follow):
-    1. **Pitch (1-line hook)** – A direct, compelling summary of why you're a fit.
-    2. **Related Experience** – Specific achievements aligned with the project.
-    3. **Portfolio** – Briefly mention portfolio or past work links.
-    4. **CTA** – Invite client to message you for more discussion or next steps.
-"""
-
-budget_context = f"Budget Consideration: {client_budget}" if client_budget else ""
-timeline_context = f"Timeline Requirement: {timeline}" if timeline else ""
-
-user_prompt = f"""
-PROJECT DETAILS:
-Title: {title}
-Description: {description}
-Required Skills: {skills}
-{budget_context}
-{timeline_context}
-
-TECHNICAL BACKGROUND TO INCLUDE:
-- 50+ successful AI/ML deployments
-- PyTorch, TensorFlow, Hugging Face
-- Cloud-scale deployments (AWS, GCP, Azure with GPUs)
-- MLOps (CI/CD, model monitoring, retraining automation)
-- Optimization for real-time inference (TensorRT, ONNX, quantization)
-- Regulatory compliance: GDPR, HIPAA, SOC2
-
-PROJECT SUCCESS STORIES:
-- Object Detection: 99.2% accuracy at 1000+ FPS
-- NLP: Custom LLM reduced hallucination by 85%
-- MLOps: Pipelines reducing drift by 60%
-- Edge AI: On-device inference under 50ms
-
-TASK:
-Using the above details and CO-STAR approach, generate a 150–200 word cover letter in the following format:
-- Pitch (hook sentence)
-- Related experience
-- Portfolio mention
-- Invitation to contact/DM
-"""
-
-        
+        """
+        Generate a sophisticated, results-oriented cover letter for technical proposals using the CO-STAR prompting technique and respond in the following format:
+        - Pitch (first line)
+        - Related experience
+        - Portfolio mention
+        - Ask to contact/DM if interested
+        Args:
+        title (str): Project title
+        description (str): Project description
+        skills (str): Required skills
+        client_budget (str, optional): Project budget range
+        timeline (str, optional): Expected timeline
+        Returns:
+        str: A professional cover letter with fixed format and tone
+        """
+        system_prompt = """
+        You are a Senior Technical Lead writing high-converting technical cover letters for Upwork proposals. Use the CO-STAR framework to guide your tone, structure, and relevance.
+        CO-STAR Breakdown:
+        - **Context**: You’re applying to a job post on Upwork related to AI/ML or software engineering.
+        - **Objective**: Generate a concise, effective cover letter that matches the client’s needs with your qualifications.
+        - **Style**: Clear, professional, and focused on measurable results.
+        - **Tone**: Friendly, confident, client-centered.
+        - **Audience**: Clients posting technical jobs (AI, ML, software) on Upwork. May or may not be highly technical.
+        - **Response Format** (strictly follow):
+        1. **Pitch (1-line hook)** – A direct, compelling summary of why you're a fit.
+        2. **Related Experience** – Specific achievements aligned with the project.
+        3. **Portfolio** – Briefly mention portfolio or past work links.
+        4. **CTA** – Invite client to message you for more discussion or next steps.
+        """
+        budget_context = f"Budget Consideration: {client_budget}" if client_budget else ""
+        timeline_context = f"Timeline Requirement: {timeline}" if timeline else ""
+        user_prompt = f"""
+        PROJECT DETAILS:
+        Title: {title}
+        Description: {description}
+        Required Skills: {skills}
+        {budget_context}
+        {timeline_context}
+        TECHNICAL BACKGROUND TO INCLUDE:
+        - 50+ successful AI/ML deployments
+        - PyTorch, TensorFlow, Hugging Face
+        - Cloud-scale deployments (AWS, GCP, Azure with GPUs)
+        - MLOps (CI/CD, model monitoring, retraining automation)
+        - Optimization for real-time inference (TensorRT, ONNX, quantization)
+        - Regulatory compliance: GDPR, HIPAA, SOC2
+        PROJECT SUCCESS STORIES:
+        - Object Detection: 99.2% accuracy at 1000+ FPS
+        - NLP: Custom LLM reduced hallucination by 85%
+        - MLOps: Pipelines reducing drift by 60%
+        - Edge AI: On-device inference under 50ms
+        TASK:
+        Using the above details and CO-STAR approach, generate a 150–200 word cover letter in the following format:
+        - Pitch (hook sentence)
+        - Related experience
+        - Portfolio mention
+        - Invitation to contact/DM
+        """
         try:
             chat_completion = self.client.chat.completions.create(
                 messages=[
