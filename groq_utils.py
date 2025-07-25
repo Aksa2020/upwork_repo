@@ -24,6 +24,7 @@ class GroqProjectPlanner:
 def search_web(self, query: str, num_results: int = 5) -> str:
     st.info(f"🔍 Searching the web using DuckDuckGo for: '{query}'")
     logger.info(f"Performing DuckDuckGo search for query: {query}")
+    print(f"🔍 DEBUG: Performing DuckDuckGo search for: {query}")  # fallback
 
     try:
         url = "https://api.duckduckgo.com/"
@@ -35,7 +36,7 @@ def search_web(self, query: str, num_results: int = 5) -> str:
         }
 
         response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()  # raises HTTPError if not 2xx
+        response.raise_for_status()
 
         data = response.json()
         search_context = ""
@@ -54,6 +55,7 @@ def search_web(self, query: str, num_results: int = 5) -> str:
 
     except requests.exceptions.RequestException as e:
         logger.error(f"Web search error: {e}")
+        st.error(f"Search failed: {str(e)}")
         return f"Search failed: {str(e)}"
 
 
