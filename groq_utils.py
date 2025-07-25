@@ -45,14 +45,14 @@ class GroqProjectPlanner:
                     search_context += f"- {item['Text']}\n"
                     if len(search_context.splitlines()) >= num_results:
                         break
-
+                        
             return search_context.strip() if search_context else "No relevant results found"
         else:
             return f"DuckDuckGo API error: {response.status_code}"
-
+        
     except Exception as e:
-        logger.error(f"Web search error: {e}")
-        return f"Search failed: {str(e)}"
+    logger.error(f"Web search error: {e}")
+    return f"Search failed: {str(e)}"
 
     def generate_technical_project_flow(self, title: str, description: str, skills: str) -> Tuple[str, Dict[str, str]]:
         """Generate technical project flow with tools and technologies."""
