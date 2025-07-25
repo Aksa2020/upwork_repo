@@ -22,11 +22,10 @@ class GroqProjectPlanner:
             raise
             
     def search_web(self, query: str, num_results: int = 5) -> str:
-    """Search web using DuckDuckGo's Instant Answer API."""
-    st.info(f"Searching the web using DuckDuckGo for: '{query}'")  # Streamlit user message
-    logger.info(f"Performing DuckDuckGo search for query: {query}")  # Console log
-    
-    try:
+        """Search web using DuckDuckGo's Instant Answer API."""
+        st.info(f"Searching the web using DuckDuckGo for: '{query}'")  # Streamlit user message
+        logger.info(f"Performing DuckDuckGo search for query: {query}")  
+        try:
         url = "https://api.duckduckgo.com/"
         params = {
             "q": query,
