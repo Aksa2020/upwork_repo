@@ -5,3 +5,5 @@ Pillow
 graphviz
 groq
 matplotlib
+textwrap3==0.9.2
+requests==2.31.0
