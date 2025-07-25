@@ -26,13 +26,13 @@ class GroqProjectPlanner:
         st.info(f"Searching the web using DuckDuckGo for: '{query}'")  # Streamlit user message
         logger.info(f"Performing DuckDuckGo search for query: {query}")  
         try:
-        url = "https://api.duckduckgo.com/"
-        params = {
+            url = "https://api.duckduckgo.com/"
+            params = {
             "q": query,
             "format": "json",
             "no_html": 1,
             "skip_disambig": 1
-        }
+            }
 
         response = requests.get(url, params=params, timeout=10)
         if response.status_code == 200:
