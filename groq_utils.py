@@ -20,39 +20,42 @@ class GroqProjectPlanner:
         except Exception as e:
             logger.error(f"Groq client init failed: {e}")
             raise
-    
-    def search_web(self, query: str, num_results: int = 5) -> str:
-        """Search web using Serper API for latest tech trends and tools."""
-        if not self.serper_api_key:
-            return "Web search not available - API key not configured"
-        
-        try:
-            url = "https://google.serper.dev/search"
-            payload = json.dumps({
-                "q": query,
-                "num": num_results
-            })
-            headers = {
-                'X-API-KEY': self.serper_api_key,
-                'Content-Type': 'application/json'
-            }
             
-            response = requests.post(url, headers=headers, data=payload, timeout=10)
-            if response.status_code == 200:
-                results = response.json()
-                search_context = ""
-                
-                if 'organic' in results:
-                    for result in results['organic'][:num_results]:
-                        search_context += f"- {result.get('title', '')}: {result.get('snippet', '')}\n"
-                
-                return search_context if search_context else "No relevant results found"
-            else:
-                return f"Search API error: {response.status_code}"
-                
-        except Exception as e:
-            logger.error(f"Web search error: {e}")
-            return f"Search failed: {str(e)}"
+    def search_web(self, query: str, num_results: int = 5) -> str:
+    """Search web using DuckDuckGo's Instant Answer API."""
+    try:
+        url = "https://api.duckduckgo.com/"
+        params = {
+            "q": query,
+            "format": "json",
+            "no_html": 1,
+            "skip_disambig": 1
+        }
+
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            search_context = ""
+
+            # Use Abstract and RelatedTopics from DuckDuckGo API
+            if data.get("AbstractText"):
+                search_context += f"- {data.get('Heading', 'Info')}: {data['AbstractText']}\n"
+
+            related = data.get("RelatedTopics", [])
+            for item in related:
+                if isinstance(item, dict) and 'Text' in item:
+                    search_context += f"- {item['Text']}\n"
+                    if len(search_context.splitlines()) >= num_results:
+                        break
+
+            return search_context.strip() if search_context else "No relevant results found"
+        else:
+            return f"DuckDuckGo API error: {response.status_code}"
+
+    except Exception as e:
+        logger.error(f"Web search error: {e}")
+        return f"Search failed: {str(e)}"
+
     
     def generate_technical_project_flow(self, title: str, description: str, skills: str) -> Tuple[str, Dict[str, str]]:
         """Generate technical project flow with tools and technologies."""
