@@ -22,27 +22,23 @@ class GroqProjectPlanner:
             raise
 
     def search_web(self, query: str, num_results: int = 5) -> str:
-    """Search web using DuckDuckGo's Instant Answer API."""
-    st.info(f"🔍 Searching the web using DuckDuckGo for: '{query}'")  # UI message
-    logger.info(f"Performing DuckDuckGo search for query: {query}")  # Log message
-
-    try:
-        url = "https://api.duckduckgo.com/"
-        params = {
-            "q": query,
-            "format": "json",
-            "no_html": 1,
-            "skip_disambig": 1
-        }
-
-        response = requests.get(url, params=params, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            search_context = ""
-
-            if data.get("AbstractText"):
-                search_context += f"- {data.get('Heading', 'Info')}: {data['AbstractText']}\n"
-
+        """Search web using DuckDuckGo's Instant Answer API."""
+        st.info(f"🔍 Searching the web using DuckDuckGo for: '{query}'")  # UI message
+        logger.info(f"Performing DuckDuckGo search for query: {query}")  # Log message
+        try:
+            url = "https://api.duckduckgo.com/"
+            params = {
+                "q": query,
+                "format": "json",
+                "no_html": 1,
+                "skip_disambig": 1
+            }
+            response = requests.get(url, params=params, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                search_context = ""
+                if data.get("AbstractText"):
+                    search_context += f"- {data.get('Heading', 'Info')}: {data['AbstractText']}\n"
             related = data.get("RelatedTopics", [])
             for item in related:
                 if isinstance(item, dict) and 'Text' in item:
