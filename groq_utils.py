@@ -145,10 +145,11 @@ class GroqProjectPlanner:
         - 99%+ accuracy systems, <50ms latency optimization
         
         Write 150-200 word cover letter demonstrating:
-        1. Project understanding with industry awareness
+        1. Pitch for the Project
         2. Relevant expertise aligned with current trends
-        3. Technical approach
-        4. Clear next steps
+        3. Project understanding with industry awareness
+        4. Technical approach
+        5. Clear next steps
         """
         
         try:
