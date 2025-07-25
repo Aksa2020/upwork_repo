@@ -20,19 +20,20 @@ class GroqProjectPlanner:
         except Exception as e:
             logger.error(f"Groq client init failed: {e}")
             raise
-            
+
     def search_web(self, query: str, num_results: int = 5) -> str:
-        """Search web using DuckDuckGo's Instant Answer API."""
-        st.info(f"Searching the web using DuckDuckGo for: '{query}'")  # Streamlit user message
-        logger.info(f"Performing DuckDuckGo search for query: {query}")  
-        try:
-            url = "https://api.duckduckgo.com/"
-            params = {
+    """Search web using DuckDuckGo's Instant Answer API."""
+    st.info(f"🔍 Searching the web using DuckDuckGo for: '{query}'")  # UI message
+    logger.info(f"Performing DuckDuckGo search for query: {query}")  # Log message
+
+    try:
+        url = "https://api.duckduckgo.com/"
+        params = {
             "q": query,
             "format": "json",
             "no_html": 1,
             "skip_disambig": 1
-            }
+        }
 
         response = requests.get(url, params=params, timeout=10)
         if response.status_code == 200:
@@ -57,7 +58,6 @@ class GroqProjectPlanner:
         logger.error(f"Web search error: {e}")
         return f"Search failed: {str(e)}"
 
-    
     def generate_technical_project_flow(self, title: str, description: str, skills: str) -> Tuple[str, Dict[str, str]]:
         """Generate technical project flow with tools and technologies."""
         
